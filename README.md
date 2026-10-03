@@ -36,7 +36,7 @@ The site uses Supabase Auth and the `student_progress` table to keep each signed
 
    ```sql
    insert into public.teacher_admins (user_id)
-   select id from auth.users where email = 'teacher@example.com'
+   select id from auth.users where lower(email) = lower('Estebanthekillerx2@gmail.com')
    on conflict (user_id) do nothing;
    ```
 
