@@ -4,6 +4,20 @@ const CLOUD_SESSION_KEY='linguapath-cloud-session';
 let cloudSession=JSON.parse(localStorage.getItem(CLOUD_SESSION_KEY)||'null');
 const authHeaders=token=>({apikey:SUPABASE_KEY,'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})});
 const authRequest=(path,options={})=>fetch(SUPABASE_URL+'/auth/v1/'+path,{...options,headers:{...authHeaders(),...(options.headers||{})}});
+let recoveryToken='';
+const recoveryParams=new URLSearchParams(location.hash.replace(/^#/,''));
+if(recoveryParams.get('type')==='recovery')recoveryToken=recoveryParams.get('access_token')||'';
+const setRecoveryMode=enabled=>{
+  document.querySelector('#auth-email-label').hidden=enabled;
+  document.querySelector('#auth-username').required=!enabled;
+  document.querySelector('#auth-confirm-label').hidden=!enabled;
+  document.querySelector('#auth-confirm-password').required=enabled;
+  document.querySelector('#auth-title').textContent=enabled?'Choose a new password':loginMode?'Welcome back':'Create your account';
+  document.querySelector('#auth-subtitle').textContent=enabled?'Use a new password for your LinguaPath account.':loginMode?'Log in to continue your saved practice.':'Save your practice and pick up where you left off.';
+  document.querySelector('#auth-submit').textContent=enabled?'Save new password':loginMode?'Log in':'Create account';
+  document.querySelector('#forgot-password').hidden=enabled||!loginMode;
+  document.querySelector('#auth-toggle').hidden=enabled;
+};
 
 async function refreshCloudSession(){
   if(cloudSession?.expires_at>Date.now()/1000+60)return true;
@@ -61,13 +75,27 @@ window.lpSaveProgress=state=>{
 
 authForm.addEventListener('submit',async e=>{
   e.preventDefault();e.stopImmediatePropagation();
+  if(recoveryToken){
+    const password=document.querySelector('#auth-password').value,confirmation=document.querySelector('#auth-confirm-password').value;
+    if(password.length<6||password!==confirmation){document.querySelector('#auth-error').textContent='Passwords must match and contain at least 6 characters.';return}
+    const response=await fetch(SUPABASE_URL+'/auth/v1/user',{method:'PUT',headers:authHeaders(recoveryToken),body:JSON.stringify({password})});
+    if(!response.ok){document.querySelector('#auth-error').textContent='That reset link has expired. Request a new one and try again.';return}
+    recoveryToken='';history.replaceState(null,'',location.pathname+location.search);authForm.reset();setRecoveryMode(false);setAuthMode(true);document.querySelector('#auth-error').textContent='Password updated. You can now log in.';return;
+  }
   const email=document.querySelector('#auth-username').value.trim().toLowerCase(),password=document.querySelector('#auth-password').value;document.querySelector('#auth-error').textContent='';
   const response=loginMode?await authRequest('token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})}):await authRequest('signup',{method:'POST',body:JSON.stringify({email,password})});
   const result=await response.json();
   if(!response.ok){document.querySelector('#auth-error').textContent=result.error_description||result.msg||result.message||'Unable to access your account.';return}
   if(result.access_token){cloudSession={...result,expires_at:result.expires_at||Math.floor(Date.now()/1000)+result.expires_in};localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(cloudSession));await loadCloudUser(result.user)}else document.querySelector('#auth-error').textContent='Account created. Check your email to confirm, then log in.';
 },true);
+authToggle.addEventListener('click',()=>setTimeout(()=>document.querySelector('#forgot-password').hidden=!loginMode,0));
+document.querySelector('#forgot-password').addEventListener('click',async()=>{
+  const email=document.querySelector('#auth-username').value.trim().toLowerCase();
+  if(!email){document.querySelector('#auth-error').textContent='Enter your account email first.';document.querySelector('#auth-username').focus();return}
+  const response=await authRequest('recover',{method:'POST',body:JSON.stringify({email,redirect_to:location.origin+location.pathname})});
+  document.querySelector('#auth-error').textContent=response.ok?'If that account exists, a password-reset email is on its way.':'We could not send the reset email. Check the address and try again.';
+});
 
 document.querySelector('#logout-button').addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();if(window.lpCloudPending)await window.lpCloudPending;if(cloudSession?.access_token)await authRequest('logout',{method:'POST',headers:{Authorization:'Bearer '+cloudSession.access_token}});cloudSession=null;window.__lpCloudUser=null;localStorage.removeItem(CLOUD_SESSION_KEY);session=null;localStorage.removeItem(SESSION_KEY);authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');authForm.reset();setAuthMode(false)},true);
 
-(async()=>{if(cloudSession?.user&&cloudSession?.access_token)await loadCloudUser(cloudSession.user);else{window.__lpCloudUser=null;session=null;localStorage.removeItem(SESSION_KEY);authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');setAuthMode(false)}})();
+(async()=>{if(recoveryToken){window.__lpCloudUser=null;session=null;localStorage.removeItem(SESSION_KEY);authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');setRecoveryMode(true)}else if(cloudSession?.user&&cloudSession?.access_token)await loadCloudUser(cloudSession.user);else{window.__lpCloudUser=null;session=null;localStorage.removeItem(SESSION_KEY);authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');setAuthMode(false)}})();
