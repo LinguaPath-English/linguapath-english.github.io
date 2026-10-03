@@ -1,3 +1,77 @@
 .writing-practice{margin:16px 0;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px}.writing-practice label{display:block;font-size:13px;font-weight:700}.writing-practice textarea{display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit;resize:vertical}.writing-practice p{color:var(--muted);font-size:12px}.writing-practice button{margin-top:4px}.speaking-practice ul{padding-left:20px;color:var(--muted);font-size:13px;line-height:1.7}.answer-result{line-height:1.5}.sync-status{max-width:100px;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dark .sync-status{color:#c9d9d3}@media(max-width:420px){.sync-status{max-width:66px;font-size:10px}}
 body:not(.dark){--paper:#e9ede8;--surface:#f4f6f2;--ink:#21312b;--muted:#6b7871;--line:#d4ddd6;--shadow:0 18px 48px #233a2d12}body:not(.dark) .momentum{background:#e2eee5}body:not(.dark) .skill-card.listening{background:#e3eee5}body:not(.dark) .skill-card.reading{background:#ebe9f4}body:not(.dark) .skill-card.writing{background:#f4ecdc}body:not(.dark) .skill-card.speaking{background:#e4eef0}body:not(.dark) .tier-card{background:#e4eee6}body:not(.dark) .streak,body:not(.dark) .pill,body:not(.dark) .mini-icon,body:not(.dark) .node-icon{background:#e4eee6;color:#38664e}body:not(.dark) .answer-option:hover,body:not(.dark) .answer-option.selected{background:#e6eee7}body:not(.dark) .progress-track{background:#d5e3d8}body:not(.dark) .bottom-nav{background:#f3f5f0eb;border-color:#d7ded8;box-shadow:0 12px 34px #263b2e1a,inset 0 1px #ffffffa8}body:not(.dark) .nav-item:hover{background:#e8eee7b8}body:not(.dark) .nav-item.active{background:#e2ebe3;color:#315f47;box-shadow:0 3px 12px #244f3912,inset 0 1px #ffffffc0}
 .speaking-model{padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font-weight:600;line-height:1.55}
+
+/* A shared rhythm for the dashboard, practice, and account screens. */
+html{scroll-padding-bottom:110px}
+body{line-height:1.5;-webkit-font-smoothing:antialiased}
+body:not(.dark){--muted:#59695f}
+.shell{max-width:1120px;padding-bottom:140px}
+.topbar{height:88px;border-bottom:1px solid var(--line)}
+.brand{letter-spacing:-.04em}.brand-mark{box-shadow:inset 0 1px 0 #ffffff40}
+.header-actions{gap:10px}.icon-button,.avatar-button,.round-arrow{width:44px;height:44px;flex-shrink:0}
+.view{padding-top:30px}.section-heading{margin:8px 0 28px;align-items:center}
+.section-heading h1{font-size:clamp(30px,4vw,44px);line-height:1.12;letter-spacing:-.045em}
+.section-heading .muted{font-size:15px}.section-heading .primary{white-space:nowrap}
+.resume-hint{font-size:12px;color:var(--muted);margin:12px 0 0}
+.primary,.secondary{min-height:46px;border-radius:13px}
+.primary:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--green);outline-offset:4px}
+.view h1:focus,.practice-dialog:focus,.edit-dialog:focus{outline:none}
+.text-button{min-height:40px;padding:8px 4px}.round-arrow{box-shadow:0 4px 12px #12232212}
+.momentum{border:1px solid var(--line);padding:26px 30px;border-radius:24px;box-shadow:none}
+.momentum h2{font-size:clamp(23px,3vw,30px);letter-spacing:-.035em;line-height:1.2}
+.momentum .eyebrow{margin-bottom:12px}.momentum .accent-text{margin-bottom:14px}
+.progress-ring{flex-shrink:0;width:94px;height:94px}.progress-ring:after{inset:7px}
+.progress-track{height:5px;margin:-19px 30px 28px}.progress-track span,.lesson-progress span{transition:width .3s ease}
+.skill-grid{gap:16px}.skill-card{border:1px solid var(--line);border-radius:20px;padding:20px;min-height:168px}
+.skill-card .skill-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#ffffff70;margin-bottom:24px}
+.skill-icon svg{width:25px;height:25px}.skill-card strong{font-size:18px}.skill-card small{line-height:1.5}
+.card-arrow{font-size:22px;opacity:.55}.skill-grid-large{max-width:none}.skill-grid-large .skill-card{min-height:176px}
+.lower-grid{gap:16px;margin-top:16px;grid-template-columns:1.35fr 1fr}
+.quote-card,.mini-card,.tier-card,.settings-card{border-radius:20px}
+.quote-card{position:relative;padding:25px 28px}.quote-card p{font:500 18px/1.6 'DM Sans',sans-serif;margin:10px 0 18px}
+.quote-mark{position:absolute;right:22px;top:28px;font-size:60px;opacity:.3}.quote-card p{padding-right:12px}
+.mini-card{padding:24px;gap:12px}.mini-icon{flex-shrink:0}.mini-card p{margin-top:4px}.mini-card .round-arrow{margin-left:auto}
+.journey-list{max-width:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.journey-node{padding:20px}.journey-node.locked{opacity:.7}.node-icon{flex-shrink:0}
+.profile-card{grid-template-columns:auto minmax(0,1fr) repeat(2,150px)}.profile-card h2{overflow-wrap:anywhere}
+.settings-card{padding:20px 24px}.switch{background:#aab8af;flex-shrink:0}.switch span{margin:0;transform:translateX(0);width:24px;height:24px}
+.dark .switch{background:#36bd82;box-shadow:none}.dark .switch span{transform:translateX(22px)}
+.mistake-row{padding:20px;line-height:1.6}.mistake-row p{font-size:15px;overflow-wrap:anywhere}
+.achievement-head{gap:12px}.achievement-head .pill{white-space:nowrap}.achievement-grid .achievement.locked{opacity:.8}
+.momentum-panel{padding:24px}.daily-dots{flex-wrap:wrap;flex-shrink:0;margin-top:12px;gap:7px}.daily-dots span{width:15px;height:15px}
+.profile-popout{min-width:200px;top:54px;padding:8px;border-radius:16px;box-shadow:0 14px 40px #10291f24}
+.profile-popout button{min-height:44px}.profile-popout #reset-progress-button{font-weight:500;color:var(--muted);border-top:1px solid var(--line);border-radius:0;margin-top:4px}
+.bottom-nav .nav-item{min-height:54px}.nav-item svg{width:21px;height:21px;vertical-align:middle}.nav-item span{margin-bottom:4px;line-height:1}
+.toast{z-index:60;max-width:calc(100vw - 32px);width:max-content;box-shadow:var(--shadow);text-align:center}
+.dark .toast{background:#dceddf;color:#173629}
+.dialog-open{overflow:hidden}.practice-modal,.edit-modal{backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.practice-dialog{padding:0 28px 20px;max-height:calc(100dvh - 40px);overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.practice-top{padding:20px 0;gap:12px}.practice-dialog>.practice-top{position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--line);margin-bottom:18px}
+.practice-top .eyebrow{margin-bottom:3px}.practice-top strong{font-size:17px}.practice-score{border:1px solid var(--line);padding:6px 10px;border-radius:100px;font-size:12px;white-space:nowrap}
+.level-row:has(#level-buttons:empty){display:none}.lesson-progress{height:5px}.practice-meta{margin:10px 0;color:var(--muted)}
+.question-card{padding:22px;margin-top:18px;border-radius:18px}.question-card h2{font:600 clamp(18px,2.4vw,23px)/1.55 'DM Sans',sans-serif;white-space:pre-line;letter-spacing:-.015em}
+#answer-options{counter-reset:answer;margin-top:20px}.answer-option{position:relative;display:flex;align-items:flex-start;gap:12px;padding:14px;line-height:1.5;transition:background .15s,border-color .15s}
+.answer-option:before{counter-increment:answer;content:counter(answer,upper-alpha);display:grid;place-items:center;flex:0 0 26px;height:26px;border:1px solid var(--line);border-radius:8px;font-size:11px;font-weight:700;color:var(--muted)}
+.answer-option.selected{box-shadow:inset 0 0 0 1px var(--green)}
+.answer-option:disabled{cursor:default;opacity:1}
+.answer-option.is-correct{border-color:#398660!important;background:#e1efe5!important;color:#214d36!important}.answer-option.is-correct:before{content:'✓';background:#2c7250;border-color:#2c7250;color:white}
+.answer-option.is-incorrect{border-color:#b95f58!important;background:#f5e7e4!important;color:#783c35!important;box-shadow:none}.answer-option.is-incorrect:before{content:'×';background:#ad5149;border-color:#ad5149;color:white}
+.answer-result{font-size:14px;font-weight:500;padding:0 2px}.answer-result.good,.answer-result.bad{padding:14px 16px;border-radius:12px;border:1px solid var(--line)}
+.answer-result.good{background:#e5efe6;color:#285f43}.answer-result.bad{background:#f5e9e4;color:#853e37}
+.practice-actions{position:sticky;bottom:-20px;background:var(--surface);padding:14px 0 20px;z-index:1}
+.practice-rules{color:var(--muted);font-size:12px;text-align:center;margin:8px 0 0}.practice-rules summary{cursor:pointer;padding:8px;display:list-item;list-style-position:inside}.practice-note{line-height:1.6;margin:6px auto 10px;max-width:55ch}
+.keyboard-hint{font-size:11px;color:var(--muted);margin:16px 0 0}.keyboard-hint[hidden]{display:none}
+.question-card.listening.show-transcript .transcript-button{display:inline-block}.question-card.listening.show-transcript #question-transcript{padding:16px;border-left:3px solid var(--green);background:var(--surface);border-radius:0 10px 10px 0}
+.writing-practice textarea,.auth-card input,.edit-dialog input{font:inherit;line-height:1.5}.writing-practice textarea{min-height:130px}.speaking-practice{line-height:1.6}.speaking-practice button{min-height:44px}
+.edit-dialog{max-height:calc(100dvh - 40px);overflow:auto;overscroll-behavior:contain}.edit-dialog .practice-top{padding:0 0 10px;justify-content:space-between}
+.auth-card{padding:32px}.auth-card .brand{margin-bottom:28px}.auth-screen{overflow:auto}.auth-card h1{line-height:1.15}
+.dark .skill-card .skill-icon{background:#ffffff10}.dark .practice-score{color:#a0e1bc}.dark .accent-text,.dark .text-button,.dark .mistake-row strong{color:#a0d8b9}
+.dark .answer-option.is-correct{background:#234434!important;color:#d4efdd!important;border-color:#4d9670!important}.dark .answer-option.is-incorrect{background:#482e2b!important;color:#ffd1cb!important;border-color:#b37269!important}
+.dark .answer-result.good{background:#213d2e;color:#bce7ce}.dark .answer-result.bad{background:#432d2b;color:#f4b9b2}
+@media(hover:hover){.primary:not(:disabled):hover,.round-arrow:hover{filter:brightness(1.12);transform:translateY(-1px)}.secondary:hover{border-color:var(--green)}.skill-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px #173a2612}.skill-card:hover .card-arrow{opacity:1}}
+@media(prefers-reduced-motion:no-preference){.view.active{animation:enter-view .2s ease-out}.practice-modal.open .practice-dialog,.edit-modal.open .edit-dialog{animation:enter-view .18s ease-out}@keyframes enter-view{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}}
+@media(max-width:760px){.shell{padding:0 18px 128px}.topbar{height:76px}.section-heading .primary{width:100%;margin-top:18px}.section-heading{margin-bottom:22px}.view{padding-top:22px}.momentum{padding:22px;gap:16px}.progress-track{margin-left:22px;margin-right:22px}.progress-ring{width:80px;height:80px}.skill-grid{gap:12px}.skill-card{min-height:156px;padding:16px}.skill-card .skill-icon{margin-bottom:20px}.lower-grid{grid-template-columns:1fr}.mini-card{padding:20px}.journey-list{grid-template-columns:1fr}.profile-card{grid-template-columns:auto minmax(0,1fr)}.momentum-detail-card{padding:16px}.momentum-detail-card strong{font-size:24px}.achievement-head{align-items:flex-start;flex-wrap:wrap}.practice-modal{padding:10px!important}.practice-dialog{max-height:calc(100dvh - 20px);padding:0 16px 16px;border-radius:22px}.practice-top{flex-wrap:wrap;gap:10px}.practice-top strong{font-size:15px}.practice-score{font-size:11px;padding:5px 8px}.question-card{padding:16px}.practice-actions{bottom:-16px;padding-bottom:16px}.keyboard-hint{display:none}.question-card h2{font-size:19px}.edit-dialog{padding:22px}.quote-card p{font-size:17px}.daily-dots{gap:6px}.nav-item{touch-action:manipulation}}
+@media(max-width:380px){.brand{font-size:19px;gap:7px}.header-actions{gap:6px}.sync-status{max-width:48px}.practice-score{margin-left:54px}.momentum h2{font-size:21px}.skill-card small{font-size:11px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*:before,*:after{animation:none!important;transition:none!important}}
