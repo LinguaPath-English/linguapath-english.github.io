@@ -7,7 +7,7 @@
   <title>LinguaPath · Your daily English practice</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2336bd82'/%3E%3Cpath d='M18 18h9v21c0 5 3 7 8 7 6 0 9-3 9-8V18h9v21c0 10-7 16-18 16S18 49 18 39V18Z' fill='white'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="style.css?v=20260924-1" />
-  <link rel="stylesheet" href="improvements.css?v=20260924-4" />
+  <link rel="stylesheet" href="improvements.css?v=20261003-1" />
   <link rel="stylesheet" href="liquid-navigation.css?v=20260922-1" />
   <link rel="stylesheet" href="achievements.css?v=20260922-1" />
   <link rel="stylesheet" href="ambient-background.css?v=20260922-3" />
@@ -40,11 +40,12 @@
   <div class="practice-modal" id="practice-modal" aria-hidden="true"><div class="practice-dialog"><div class="practice-top"><button class="icon-button" id="close-practice">←</button><div><p class="eyebrow" id="practice-skill">Listening</p><strong id="practice-count">Exercise 1 of 100</strong></div><span class="practice-score" id="practice-score">0 / 100 correct</span></div><div class="level-row"><span>Choose your level</span><div id="level-buttons"></div></div><div class="lesson-progress"><span id="lesson-progress-bar"></span></div><p class="practice-meta" id="practice-lesson">Lesson 1 of 100</p><div class="question-card"><p class="eyebrow">Practice question</p><button class="secondary audio-button" id="play-audio" type="button">▶ Play passage</button><button class="text-button transcript-button" id="toggle-transcript" type="button">Show transcript</button><h2 id="question-text"></h2><p id="question-transcript" class="question-transcript"></p><div id="writing-practice" class="writing-practice" style="display:none"><label for="writing-response">Draft your own response first</label><textarea id="writing-response" rows="4" placeholder="Write your answer here…"></textarea><p>When you’re ready, compare it with the sample answers and choose the strongest one.</p><button class="secondary" id="show-writing-samples" type="button" disabled>Compare with sample answers</button></div><div id="speaking-practice" class="speaking-practice" style="display:none"><p>Answer the examiner aloud before viewing the sample responses. Then review yourself:</p><ul><li>I answered the question directly.</li><li>I added a relevant reason or detail.</li><li>My response was clear and organized.</li></ul><button class="secondary" id="start-speaking" type="button">Start recording</button><button class="secondary" id="stop-speaking" type="button" style="display:none">Stop recording</button><button class="text-button" id="continue-speaking" type="button">I’ve answered out loud</button><p id="speaking-status" aria-live="polite">Your recording stays in this browser and is not uploaded.</p><audio id="speaking-recording" controls hidden></audio></div><div id="answer-options"></div></div><p class="answer-result" id="answer-result"></p><button class="primary full" id="check-answer" disabled>Check answer</button><p class="practice-note">To unlock the next tier, get 100 answers correct and clear all missed-question reviews for that tier. The green score above is for this skill and tier.</p></div></div>
   <div class="edit-modal" id="edit-modal" aria-hidden="true"><div class="edit-dialog"><div class="practice-top"><div><p class="eyebrow">Your profile</p><h2>Customize your space</h2></div><button class="icon-button" id="close-edit">×</button></div><label>Name<input id="profile-name" /></label><label>Learning goal<input id="profile-goal" /></label><label>Avatar<input id="profile-emoji" maxlength="2" /></label><label>Daily lessons<input id="profile-target" type="number" min="1" max="10" /></label><button class="primary full" id="save-profile">Save profile</button></div></div>
   <div class="toast" role="status" aria-live="polite"></div>
-  <script src="script.js?v=20260924-6"></script>
+  <script src="script.js?v=20261003-1"></script>
   <script src="improvements.js?v=20260924-4"></script>
   <script src="achievements.js?v=20260923-3"></script>
   <script src="ambient-background.js?v=20260922-4"></script>
   <script src="supabase-auth.js?v=20260924-3"></script>
   <script src="sync-indicator.js?v=20260924-1"></script>
+  <script src="interface.js?v=20261003-1"></script>
 </body>
 </html>
