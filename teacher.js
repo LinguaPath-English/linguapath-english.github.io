@@ -8,7 +8,7 @@ const formatDate=value=>value?new Intl.DateTimeFormat('en-US',{dateStyle:'medium
 const escapeHtml=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 async function loadStudents(){
   const response=await fetch(TEACHER_URL+'/rest/v1/rpc/teacher_progress',{method:'POST',headers:{apikey:TEACHER_KEY,Authorization:'Bearer '+teacherSession.access_token,'Content-Type':'application/json'}});
-  if(!response.ok){showError(response.status===401||response.status===403?'This account is not listed as a teacher yet. Add its user ID to teacher_admins in Supabase.':'Could not load student progress.');return false}
+  if(!response.ok){showError(response.status===404?'Teacher access is not set up yet. Run the teacher setup SQL in Supabase, then try again.':response.status===401||response.status===403?'This account is not listed as a teacher yet. Run the teacher email setup SQL in Supabase.':'Could not load student progress.');return false}
   const rows=await response.json(),body=document.querySelector('#teacher-rows');
   body.innerHTML=rows.map(row=>{const state=row.state||{},profile=state.profile||{};return `<tr><td><strong>${escapeHtml(profile.name||'Learner')}</strong></td><td>${escapeHtml(row.email||'')}</td><td>${Number(state.exercisesCompleted)||0}</td><td>${Number(state.correct)||0}</td><td>${Number(state.streak)||0} days</td><td>${formatDate(row.updated_at)}</td></tr>`}).join('');
   document.querySelector('#teacher-empty').hidden=rows.length>0;
