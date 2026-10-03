@@ -40,3 +40,8 @@ $$;
 
 revoke all on function public.teacher_progress() from public;
 grant execute on function public.teacher_progress() to authenticated;
+
+-- Teacher account for LinguaPath.
+insert into public.teacher_admins (user_id)
+select id from auth.users where lower(email) = lower('Estebanthekillerx2@gmail.com')
+on conflict (user_id) do nothing;
