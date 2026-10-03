@@ -30,7 +30,7 @@ The site uses Supabase Auth and the `student_progress` table to keep each signed
 1. Create a Supabase project.
 2. In the Supabase SQL Editor, run [`supabase.sql`](supabase.sql) to create the progress table and row-level security policies.
 3. In `supabase-auth.js`, set `SUPABASE_URL` and `SUPABASE_KEY` to your project URL and **publishable** key.
-4. Enable email sign-in in Supabase Auth. Configure the site URL and allowed redirect URLs for your deployed site (and `http://localhost:8000` for local testing).
+4. Enable email sign-in in Supabase Auth. Configure the site URL and allowed redirect URLs for your deployed site (and `http://localhost:8000` for local testing). Password recovery uses the same site URL.
 5. Deploy the site and test account creation, sign-in, sign-out, password recovery, and progress syncing.
 6. For teacher access, after creating your teacher account, run this once in Supabase SQL Editor, replacing the email:
 
