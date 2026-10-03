@@ -31,7 +31,16 @@ The site uses Supabase Auth and the `student_progress` table to keep each signed
 2. In the Supabase SQL Editor, run [`supabase.sql`](supabase.sql) to create the progress table and row-level security policies.
 3. In `supabase-auth.js`, set `SUPABASE_URL` and `SUPABASE_KEY` to your project URL and **publishable** key.
 4. Enable email sign-in in Supabase Auth. Configure the site URL and allowed redirect URLs for your deployed site (and `http://localhost:8000` for local testing).
-5. Deploy the site and test account creation, sign-in, sign-out, and progress syncing.
+5. Deploy the site and test account creation, sign-in, sign-out, password recovery, and progress syncing.
+6. For teacher access, after creating your teacher account, run this once in Supabase SQL Editor, replacing the email:
+
+   ```sql
+   insert into public.teacher_admins (user_id)
+   select id from auth.users where email = 'teacher@example.com'
+   on conflict (user_id) do nothing;
+   ```
+
+   Then open [`teacher.html`](teacher.html) and sign in with that account. The dashboard can only read progress through the protected `teacher_progress()` function.
 
 The publishable key is intended for browser use; database access is restricted by the row-level security policies. Never put a Supabase `service_role` or other secret key in this repository or in browser code.
 
@@ -49,3 +58,4 @@ The live site is served from the repository’s `main` branch. To publish change
 - `achievements.js` — achievement tracking and display
 - `supabase-auth.js` — Supabase authentication and cloud progress sync
 - `supabase.sql` — progress table and row-level security policies
+- `teacher.html`, `teacher.js`, `teacher.css` — protected teacher progress dashboard
