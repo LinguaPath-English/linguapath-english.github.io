@@ -40,9 +40,13 @@ The site uses Supabase Auth and the `student_progress` table to keep each signed
    on conflict (user_id) do nothing;
    ```
 
-   Then open [`teacher.html`](teacher.html) and sign in with that account. The dashboard can only read progress through the protected `teacher_progress()` function.
+   Run [`teacher-delete.sql`](teacher-delete.sql) in the SQL Editor to enable the protected teacher dashboard functions on an existing project. Then open [`teacher.html`](teacher.html) and sign in with that account. The dashboard shows recent activity, supports CSV export, and can remove a student account after you type the student's email to confirm. Deleting an account removes its Supabase login and saved progress.
 
 The publishable key is intended for browser use; database access is restricted by the row-level security policies. Never put a Supabase `service_role` or other secret key in this repository or in browser code.
+
+## Quick checks
+
+Run `node tests/smoke.cjs` to check save status, teacher controls, and answer feedback without touching real accounts.
 
 ## Deploy with GitHub Pages
 
@@ -57,5 +61,7 @@ The live site is served from the repository’s `main` branch. To publish change
 - `quotes.json` — daily quote collection
 - `achievements.js` — achievement tracking and display
 - `supabase-auth.js` — Supabase authentication and cloud progress sync
+- `sync-indicator.js` — visible save status and retry control
 - `supabase.sql` — progress table and row-level security policies
-- `teacher.html`, `teacher.js`, `teacher.css` — protected teacher progress dashboard
+- `teacher-delete.sql` — teacher-only progress access and account removal functions; run this in the SQL Editor after `supabase.sql`
+- `teacher.html`, `teacher.js`, `teacher.css`, `teacher-upgrades.css` — protected teacher progress dashboard

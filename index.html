@@ -7,7 +7,7 @@
   <title>LinguaPath · Your daily English practice</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2336bd82'/%3E%3Cpath d='M18 18h9v21c0 5 3 7 8 7 6 0 9-3 9-8V18h9v21c0 10-7 16-18 16S18 49 18 39V18Z' fill='white'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="style.css?v=20261003-1" />
-  <link rel="stylesheet" href="improvements.css?v=20261003-2" />
+  <link rel="stylesheet" href="improvements.css?v=20261005-2" />
   <link rel="stylesheet" href="liquid-navigation.css?v=20260922-1" />
   <link rel="stylesheet" href="achievements.css?v=20260922-1" />
   <link rel="stylesheet" href="ambient-background.css?v=20260922-3" />
@@ -15,10 +15,11 @@
 <body>
   <section class="auth-screen" id="auth-screen"><div class="auth-card"><div class="brand"><span class="brand-mark">L</span><span>linguapath</span></div><p class="eyebrow">Your learning space</p><h1 id="auth-title">Create your account</h1><p class="muted" id="auth-subtitle">Save your practice and pick up where you left off.</p><form id="auth-form"><label id="auth-email-label">Email<input id="auth-username" type="email" autocomplete="email" required /></label><label>Password<input id="auth-password" type="password" autocomplete="new-password" required minlength="6" /></label><label id="auth-confirm-label" hidden>Confirm password<input id="auth-confirm-password" type="password" autocomplete="new-password" minlength="6" /></label><button class="primary full" id="auth-submit">Create account</button></form><button class="text-button auth-reset" id="forgot-password" type="button" hidden>Forgot your password?</button><p class="auth-error" id="auth-error" role="status" aria-live="polite"></p><button class="text-button auth-toggle" id="auth-toggle" type="button">Already have an account? Log in</button></div></section>
   <div class="shell">
-    <header class="topbar"><a class="brand" href="#today"><span class="brand-mark">L</span><span>linguapath</span></a><div class="header-actions"><span id="sync-status" class="sync-status" role="status" aria-live="polite"></span><span class="streak">🔥 7 day streak</span><button class="icon-button" id="theme-toggle" aria-label="Toggle dark mode">☾</button><div class="profile-menu"><button class="avatar-button" id="profile-menu-toggle" aria-label="Open profile menu" aria-expanded="false">ES</button><div class="profile-popout" id="profile-popout"><a class="profile-link" href="teacher.html">Teacher progress</a><button id="logout-button" type="button">Log out</button><button id="reset-progress-button" type="button">Reset my progress</button></div></div></div></header>
+    <header class="topbar"><a class="brand" href="#today"><span class="brand-mark">L</span><span>linguapath</span></a><div class="header-actions"><div class="sync-control"><span id="sync-status" class="sync-status" role="status" aria-live="polite">Loading progress…</span><button id="sync-retry" class="sync-retry" type="button" hidden>Retry</button></div><span class="streak">🔥 7 day streak</span><button class="icon-button" id="theme-toggle" aria-label="Toggle dark mode">☾</button><div class="profile-menu"><button class="avatar-button" id="profile-menu-toggle" aria-label="Open profile menu" aria-expanded="false">ES</button><div class="profile-popout" id="profile-popout"><a class="profile-link" href="teacher.html">Teacher progress</a><button id="logout-button" type="button">Log out</button><button id="reset-progress-button" type="button">Reset my progress</button></div></div></div></header>
     <main>
       <section class="view active" id="today">
         <div class="section-heading"><div><p class="eyebrow" id="today-date"></p><h1>Ready to level up?</h1><p class="muted">Your Cambridge Linguaskill journey continues.</p></div><button class="primary" data-action="practice">Continue lesson <span>→</span></button></div>
+        <aside class="welcome-guide" id="welcome-guide" hidden aria-labelledby="welcome-title"><div><p class="eyebrow">Start here</p><h2 id="welcome-title">Your first practice session</h2><p>Choose any skill and answer at your own pace. Ten answered exercises complete your daily goal.</p><p>Earn 100 correct answers across the four skills to unlock the next tier. Questions you miss return at the end of that tier.</p><p>Your place and progress save to your account so you can continue on another device.</p></div><button class="secondary" id="welcome-dismiss" type="button">Got it — start practicing</button></aside>
         <div class="momentum momentum-link" data-action="momentum" role="button" tabindex="0"><div><p class="eyebrow">Daily momentum</p><h2>Start your streak today.</h2><p class="accent-text">0/10 exercises answered today</p></div><div class="progress-ring"><strong>0%</strong><span>today</span></div></div>
         <div class="progress-track"><span style="width:68%"></span></div>
         <div class="section-title"><h2>Practice by skill</h2><button class="text-button" data-nav="skills">View all →</button></div>
@@ -41,11 +42,11 @@
   <div class="edit-modal" id="edit-modal" aria-hidden="true"><div class="edit-dialog"><div class="practice-top"><div><p class="eyebrow">Your profile</p><h2>Customize your space</h2></div><button class="icon-button" id="close-edit">×</button></div><label>Name<input id="profile-name" /></label><label>Learning goal<input id="profile-goal" /></label><label>Avatar<input id="profile-emoji" maxlength="2" /></label><label>Daily lessons<input id="profile-target" type="number" min="1" max="10" /></label><button class="primary full" id="save-profile">Save profile</button></div></div>
   <div class="toast" role="status" aria-live="polite"></div>
   <script src="script.js?v=20261003-1"></script>
-  <script src="improvements.js?v=20261005-1"></script>
+  <script src="improvements.js?v=20261005-2"></script>
   <script src="achievements.js?v=20260923-3"></script>
   <script src="ambient-background.js?v=20260922-4"></script>
-  <script src="supabase-auth.js?v=20261005-1"></script>
-  <script src="sync-indicator.js?v=20260924-1"></script>
-  <script src="interface.js?v=20261003-2"></script>
+  <script src="supabase-auth.js?v=20261005-2"></script>
+  <script src="sync-indicator.js?v=20261005-2"></script>
+  <script src="interface.js?v=20261005-2"></script>
 </body>
 </html>

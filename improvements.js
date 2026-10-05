@@ -37,11 +37,27 @@ showSpeakingOptions = message => {
 };
 
 function explainAnswer(question) {
-  const answer = question.a;
-  if (P.skill === 'Reading') return `Explanation: The passage supports “${answer}”. Check the sentence that gives this detail.`;
-  if (P.skill === 'Listening') return `Explanation: The key spoken detail is “${answer}”. Listen for the time, action, or change described.`;
-  if (P.skill === 'Writing') return `Explanation: “${answer}” best meets the writing goal stated in the prompt.`;
-  return `Explanation: “${answer}” responds directly and gives the most complete answer to the examiner.`;
+  if (question.s === 'Reading' || question.s === 'Listening') {
+    const source = question.s === 'Listening' ? question.transcript || question.audio || ''
+      : question.p.match(/Passage:\s*"([\s\S]*?)"\s*\n/)?.[1] || '';
+    const terms = (question.a.toLowerCase().match(/[a-z]{4,}/g) || [])
+      .filter(word => !['that', 'this', 'with', 'from', 'they', 'their', 'there', 'would', 'could', 'should', 'about', 'because'].includes(word));
+    const sentences = source.replace(/\s+/g, ' ').match(/[^.!?]+[.!?]?/g) || [];
+    const ranked = sentences.map(sentence => ({ sentence: sentence.trim(), matches: terms.filter(word => sentence.toLowerCase().includes(word)).length }))
+      .sort((a, b) => b.matches - a.matches)[0];
+    if (ranked?.matches) return `Why: ${question.s === 'Listening' ? 'The speaker says' : 'The passage says'} “${ranked.sentence.slice(0, 210)}”.`;
+    return `Why: This option matches the ${question.s === 'Listening' ? 'speaker’s' : 'passage’s'} key detail or meaning.`;
+  }
+  if (question.s === 'Writing') {
+    const task = question.p.toLowerCase();
+    if (task.includes('complete sentence')) return 'Why: It has a subject and a verb and expresses a complete thought.';
+    if (/formal|polite|email|request|tutor|closing|opening/.test(task)) return 'Why: Its tone is polite and appropriate for the message’s purpose.';
+    if (/punctuation|comma|capital|apostrophe/.test(task)) return 'Why: Its punctuation and capitalization make the meaning clear.';
+    if (/link|connect|transition/.test(task)) return 'Why: The linking word shows how the ideas relate.';
+    if (/grammar|tense|verb|subject/.test(task)) return 'Why: Its grammar matches the structure asked for in the task.';
+    return 'Why: It expresses the requested idea clearly and directly.';
+  }
+  return 'Why: It answers the examiner directly and adds a relevant detail.';
 }
 
 draw = () => {

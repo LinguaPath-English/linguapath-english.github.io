@@ -47,26 +47,42 @@ function restoreSavedProgress(local,cloud){
 async function loadCloudUser(user){
   if(!await refreshCloudSession()){
     cloudSession=null;window.__lpCloudUser=null;session=null;localStorage.removeItem(CLOUD_SESSION_KEY);localStorage.removeItem(SESSION_KEY);setAuthMode(true);
+    authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');
     document.querySelector('#auth-error').textContent='Your session expired. Please log in again; your saved progress is still in your account.';return;
   }
   let response;
   try{response=await fetch(SUPABASE_URL+'/rest/v1/student_progress?select=state,updated_at&user_id=eq.'+encodeURIComponent(user.id),{headers:authHeaders(cloudSession.access_token)})}
-  catch{document.querySelector('#auth-error').textContent='Could not connect to load saved progress. Check your connection and try again.';return}
-  if(!response.ok){document.querySelector('#auth-error').textContent='Could not load saved progress. Check your connection and try again; your account data was not changed.';return}
+  catch{showCloudLoadError('Could not connect to load saved progress. Check your connection and reload the page.');return}
+  if(!response.ok){showCloudLoadError('Could not load saved progress. Reload the page or log in again. Your account data was not changed.');return}
   const rows=await response.json();
   window.__lpCloudUser=user;
   const restored=restoreSavedProgress(users()[user.id],rows[0]);
   if(restored.state){st={...D,...restored.state};st.profile={...D.profile,...st.profile};st.correctByTier=Array.isArray(st.correctByTier)?[...st.correctByTier]:[0,0,0];st.correct=st.correctByTier.reduce((a,b)=>a+b,0);if(st.dayKey!==todayKey()){st.today=0;st.dayKey=todayKey()}}else st={...D,dayKey:todayKey(),profile:{...D.profile,name:user.email?.split('@')[0]||'Learner'}};normalizeSkillTierProgress(st);window.lpNormalizePracticeSessions?.();if(st.streak&&!st.lastStreakAt)st.lastStreakAt=Date.now();
-  session=user.id;localStorage.setItem(SESSION_KEY,session);authScreen.classList.add('hidden');document.body.classList.add('authenticated');render();if(restored.restoreLocal)window.lpCloudPending=window.lpSaveProgress(st);window.lpResumePractice?.();
+  session=user.id;localStorage.setItem(SESSION_KEY,session);authScreen.classList.add('hidden');document.body.classList.add('authenticated');render();
+  window.lpCloudReady=true;
+  window.lpCloudLastSavedAt=rows[0]?.updated_at||null;
+  if(restored.restoreLocal)window.lpCloudPending=window.lpSaveProgress(st);
+  window.dispatchEvent(new CustomEvent('lp:cloud-ready',{detail:{updatedAt:window.lpCloudLastSavedAt,userId:user.id}}));
+  window.lpResumePractice?.();
+}
+
+function showCloudLoadError(message){
+  window.__lpCloudUser=null;window.lpCloudReady=false;
+  authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');
+  setAuthMode(true);
+  document.querySelector('#auth-error').textContent=message;
+  window.dispatchEvent(new CustomEvent('lp:cloud-load-failed',{detail:{message}}));
 }
 
 let cloudSaveQueue=Promise.resolve();
 window.lpSaveProgress=state=>{
   if(!cloudSession?.access_token||!window.__lpCloudUser)return Promise.resolve(false);
+  const userId=window.__lpCloudUser.id;
   const snapshot=JSON.parse(JSON.stringify(state));
   cloudSaveQueue=cloudSaveQueue.then(async()=>{
+    if(window.__lpCloudUser?.id!==userId)return false;
     if(!await refreshCloudSession())throw new Error('Your session expired. Log in again to sync progress.');
-    const response=await fetch(SUPABASE_URL+'/rest/v1/student_progress?on_conflict=user_id',{method:'POST',keepalive:true,headers:{...authHeaders(cloudSession.access_token),Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:window.__lpCloudUser.id,state:snapshot,updated_at:new Date(snapshot._savedAt||Date.now()).toISOString()})});
+    const response=await fetch(SUPABASE_URL+'/rest/v1/student_progress?on_conflict=user_id',{method:'POST',keepalive:true,headers:{...authHeaders(cloudSession.access_token),Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:userId,state:snapshot,updated_at:new Date(snapshot._savedAt||Date.now()).toISOString()})});
     if(!response.ok)throw new Error('Supabase returned '+response.status);
     return true;
   }).catch(error=>{console.error('Progress sync failed:',error);note('Progress could not sync. Check your connection and log in again if needed.');return false});
@@ -96,6 +112,6 @@ document.querySelector('#forgot-password').addEventListener('click',async()=>{
   document.querySelector('#auth-error').textContent=response.ok?'If that account exists, a password-reset email is on its way.':'We could not send the reset email. Check the address and try again.';
 });
 
-document.querySelector('#logout-button').addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();if(window.lpCloudPending)await window.lpCloudPending;if(cloudSession?.access_token)await authRequest('logout',{method:'POST',headers:{Authorization:'Bearer '+cloudSession.access_token}});cloudSession=null;window.__lpCloudUser=null;localStorage.removeItem(CLOUD_SESSION_KEY);session=null;localStorage.removeItem(SESSION_KEY);authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');authForm.reset();setAuthMode(false)},true);
+document.querySelector('#logout-button').addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();if(window.lpCloudPending)await window.lpCloudPending;if(cloudSession?.access_token)await authRequest('logout',{method:'POST',headers:{Authorization:'Bearer '+cloudSession.access_token}});cloudSession=null;window.__lpCloudUser=null;window.lpCloudReady=false;window.lpCloudLastSavedAt=null;window.dispatchEvent(new Event('lp:cloud-signed-out'));localStorage.removeItem(CLOUD_SESSION_KEY);session=null;localStorage.removeItem(SESSION_KEY);authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');authForm.reset();setAuthMode(false)},true);
 
 (async()=>{if(recoveryToken){window.__lpCloudUser=null;session=null;localStorage.removeItem(SESSION_KEY);authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');setRecoveryMode(true)}else if(cloudSession?.user&&cloudSession?.access_token)await loadCloudUser(cloudSession.user);else{window.__lpCloudUser=null;session=null;localStorage.removeItem(SESSION_KEY);authScreen.classList.remove('hidden');document.body.classList.remove('authenticated');setAuthMode(false)}})();

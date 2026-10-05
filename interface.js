@@ -1,6 +1,13 @@
 // Presentation and keyboard behavior; learning state stays in the practice flow.
 (() => {
   const $ = selector => document.querySelector(selector);
+  const welcome = $('#welcome-guide');
+  $('#welcome-dismiss').addEventListener('click', () => {
+    st.onboardingSeen = true;
+    save();
+    render();
+    $('#today [data-skill]')?.focus();
+  });
   const paths = {
     today: '<path d="m3 10 9-7 9 7v10H6V10m3 10v-7h6v7"/>',
     journey: '<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h7a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8"/>',
@@ -50,6 +57,7 @@
   const renderBeforePolish = render;
   render = () => {
     renderBeforePolish();
+    welcome.hidden = !window.__lpCloudUser || !!st.onboardingSeen || (Number(st.exercisesCompleted) || 0) > 0;
     document.body.classList.toggle('dark', !!st.profile.dark);
     const saved = st.practiceSession;
     $('#today [data-action="practice"]').innerHTML = `${saved ? 'Resume practice' : 'Start practicing'} <span aria-hidden="true">→</span>`;
@@ -93,9 +101,12 @@
     $('.lesson-progress').setAttribute('aria-valuenow', String(parseFloat($('#lesson-progress-bar').style.width) || 0));
     $('#toggle-transcript').textContent = 'Show transcript';
     $('#toggle-transcript').setAttribute('aria-expanded', 'false');
-    if (P.checked) $('#answer-result').textContent = P.selected === question.a
-      ? (P.skill === 'Speaking' ? 'Correct! Now practice saying the model answer aloud.' : 'Correct — nicely done. Continue when you’re ready.')
-      : 'Not quite. The correct answer is highlighted above. You’ll review this question at the end of the tier.';
+    if (P.checked) {
+      const result = P.selected === question.a
+        ? (P.skill === 'Speaking' ? 'Correct! Now practice saying the model answer aloud.' : 'Correct — nicely done. Continue when you’re ready.')
+        : 'Not quite. The correct answer is highlighted above. You’ll review this question at the end of the tier.';
+      $('#answer-result').textContent = `${result} ${explainAnswer(question)}`;
+    }
   };
   $('#toggle-transcript').addEventListener('click', event => {
     event.stopImmediatePropagation();
