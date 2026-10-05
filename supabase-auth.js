@@ -56,7 +56,7 @@ async function loadCloudUser(user){
   const rows=await response.json();
   window.__lpCloudUser=user;
   const restored=restoreSavedProgress(users()[user.id],rows[0]);
-  if(restored.state){st={...D,...restored.state};st.profile={...D.profile,...st.profile};st.correctByTier=Array.isArray(st.correctByTier)?[...st.correctByTier]:[0,0,0];st.correct=st.correctByTier.reduce((a,b)=>a+b,0);if(st.dayKey!==todayKey()){st.today=0;st.dayKey=todayKey()}}else st={...D,dayKey:todayKey(),profile:{...D.profile,name:user.email?.split('@')[0]||'Learner'}};normalizeSkillTierProgress(st);if(st.streak&&!st.lastStreakAt)st.lastStreakAt=Date.now();
+  if(restored.state){st={...D,...restored.state};st.profile={...D.profile,...st.profile};st.correctByTier=Array.isArray(st.correctByTier)?[...st.correctByTier]:[0,0,0];st.correct=st.correctByTier.reduce((a,b)=>a+b,0);if(st.dayKey!==todayKey()){st.today=0;st.dayKey=todayKey()}}else st={...D,dayKey:todayKey(),profile:{...D.profile,name:user.email?.split('@')[0]||'Learner'}};normalizeSkillTierProgress(st);window.lpNormalizePracticeSessions?.();if(st.streak&&!st.lastStreakAt)st.lastStreakAt=Date.now();
   session=user.id;localStorage.setItem(SESSION_KEY,session);authScreen.classList.add('hidden');document.body.classList.add('authenticated');render();if(restored.restoreLocal)window.lpCloudPending=window.lpSaveProgress(st);window.lpResumePractice?.();
 }
 

@@ -176,24 +176,39 @@ function missedTierFor(skill, limit) {
   return 0;
 }
 
+function sessionKey(skill, tier) { return `${skill}:${tier}`; }
+function practiceSessions() {
+  const sessions = st.practiceSessions && typeof st.practiceSessions === 'object' && !Array.isArray(st.practiceSessions)
+    ? st.practiceSessions : (st.practiceSessions = {});
+  const legacy = st.practiceSession;
+  if (legacy?.skill && legacy.tier && !sessions[sessionKey(legacy.skill, legacy.tier)]) {
+    sessions[sessionKey(legacy.skill, legacy.tier)] = legacy;
+  }
+  return sessions;
+}
+window.lpNormalizePracticeSessions = () => { practiceSessions(); };
+
 savePracticeSession = (active = true) => {
   if (!P.skill) return;
-  st.practiceSession = {
+  const saved = {
     skill: P.skill, tier: P.tier, i: P.i, selected: P.selected,
     checked: P.checked, draft: P.draft || '', revealed: !!P.revealed,
     spoken: !!P.spoken, phase: P.phase || 'base',
-    queueIds: P.queue.map(idForQuestion), active
+    queueIds: P.queue.map(idForQuestion), active, updatedAt: Date.now()
   };
+  practiceSessions()[sessionKey(P.skill, P.tier)] = saved;
+  st.practiceSession = saved;
   save();
 };
 
 openPractice = (skill, resume = null) => {
   if (!questionsReady) { note('Loading practice questions. Try again in a moment.'); return; }
-  const saved = resume || st.practiceSession;
   const normalTier = tierFromCorrectCount();
   const firstMissedTier = missedTierFor(skill, currentTier());
-  const keep = saved?.skill === skill &&
-    (saved.active || saved.tier === currentTier() || missedList(skill, saved.tier || 1).length > 0);
+  const sessions = Object.values(practiceSessions()).filter(item => item.skill === skill);
+  const saved = resume || sessions.find(item => item.tier === (firstMissedTier || currentTier())) ||
+    sessions.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+  const keep = saved?.skill === skill && tierUnlocked(saved.tier);
   const tier = firstMissedTier || (keep ? saved.tier : currentTier());
   const reviewOnly = !!firstMissedTier && firstMissedTier < normalTier &&
     !(keep && saved.tier === firstMissedTier);
@@ -221,6 +236,15 @@ openPractice = (skill, resume = null) => {
   savePracticeSession(true);
 };
 
+function completePracticeSession(skill, tier) {
+  const sessions = practiceSessions();
+  delete sessions[sessionKey(skill, tier)];
+  if (st.practiceSession?.skill === skill && st.practiceSession?.tier === tier) {
+    st.practiceSession = Object.values(sessions).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0] || null;
+  }
+  save();
+}
+
 const drawWithRetries = draw;
 draw = () => {
   drawWithRetries();
@@ -244,6 +268,10 @@ checkButton.addEventListener('click', event => {
   const question = P.queue[P.i];
   const pending = missedList(P.skill, P.tier);
   const id = idForQuestion(question);
+  if (P.checked && P.i === P.queue.length - 1 && !pending.length) {
+    const skill = P.skill, tier = P.tier;
+    setTimeout(() => completePracticeSession(skill, tier), 0);
+  }
   if (!P.checked) {
     if (P.selected === question.a) st.missedBySkillTier[`${P.skill}:${P.tier}`] = pending.filter(item => item !== id);
     else if (!pending.includes(id)) pending.push(id);
