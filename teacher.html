@@ -4,14 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LinguaPath · Teacher progress</title>
-  <link rel="stylesheet" href="style.css?v=20261003-1" />
+  <link rel="icon" type="image/svg+xml" href="linguapath-icon.svg?v=20261006-1" />
+  <link rel="stylesheet" href="style.css?v=20261006-1" />
   <link rel="stylesheet" href="improvements.css?v=20261005-3" />
   <link rel="stylesheet" href="teacher.css?v=20261003-1" />
   <link rel="stylesheet" href="teacher-upgrades.css?v=20261005-3" />
 </head>
 <body class="teacher-page">
   <main class="teacher-shell">
-    <header class="teacher-header"><a class="brand" href="./"><span class="brand-mark">L</span><span>linguapath</span></a><a class="secondary teacher-back" href="./">← Back to practice</a></header>
+    <header class="teacher-header"><a class="brand" href="./"><img class="brand-mark" src="linguapath-icon.svg?v=20261006-1" width="34" height="34" alt="" /><span>linguapath</span></a><a class="secondary teacher-back" href="./">← Back to practice</a></header>
     <section id="teacher-auth" class="teacher-card"><p class="eyebrow">Teacher access</p><h1>Student progress</h1><p class="muted">Log in with the teacher account you added in Supabase.</p><form id="teacher-login"><label>Email<input id="teacher-email" type="email" autocomplete="email" required /></label><label>Password<input id="teacher-password" type="password" autocomplete="current-password" required /></label><button class="primary full">Open progress dashboard</button></form><p id="teacher-error" class="teacher-error" role="status" aria-live="polite"></p></section>
     <section id="teacher-dashboard" hidden>
       <div class="teacher-heading"><div><p class="eyebrow">Teacher dashboard</p><h1>Your students</h1><p class="muted">Only accounts with saved progress appear here.</p></div><button id="teacher-refresh" class="secondary" type="button">Refresh</button></div>
