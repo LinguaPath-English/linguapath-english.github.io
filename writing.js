@@ -3,23 +3,23 @@ const writingWords = text => (String(text || '').trim().match(/\S+/g) || []).len
 function writingTask(q) {
   const title = q.p.split('\n')[0], focus = title.toLowerCase();
   const number = Number(q.id?.split(':').at(-1)) || 1;
-  const contexts = ['a study routine', 'a school event', 'a delayed delivery', 'learning online', 'a library service', 'a group project', 'a job application', 'a community activity', 'travel plans', 'a missed deadline', 'a new course', 'public transport', 'a workplace change', 'a helpful teacher', 'a local park', 'healthy habits', 'a technology purchase', 'a volunteering opportunity', 'a meeting arrangement', 'an environmental policy'];
+  const contexts = ['your study routine', 'a school event', 'a late delivery', 'learning online', 'your library', 'a group project', 'applying for a job', 'an activity in your town', 'a trip', 'late homework', 'a new course', 'buses and trains', 'a change at work', 'a helpful teacher', 'a local park', 'healthy habits', 'buying a phone', 'helping in your town', 'planning a meeting', 'protecting the environment'];
   const context = contexts[(number - 1) % contexts.length];
-  const angles = ['explain the situation and a reason', 'describe a problem and a practical solution', 'give a recommendation with supporting details', 'compare two choices and explain your preference', 'explain a change and its likely effect'];
+  const angles = ['Say what happened and why.', 'Describe a problem. Suggest a way to fix it.', 'Say what you think someone should do. Explain why.', 'Describe two choices. Say which you prefer and why.', 'Describe a change. Say what may happen next.'];
   const angle = angles[Math.floor((number - 1) / 20) % angles.length];
   const formal = /email|formal|request|apolog|invit|greeting|closing|complaint|thanks|enquir|congrat|sympathy|welcome/.test(focus);
   const organisation = /cohes|link|transition|flow|paragraph|conclusion|introduction|argument|essay|summary|summaris/.test(focus);
   const language = /tense|verb|passive|conditional|inversion|noun|sentence|grammar|punctuation|article|pronoun|adverb|adjective|hedg|nominali|modality|modal/.test(focus);
   const goals = [[20, 40], [60, 100], [120, 180]][q.t - 1] || [20, 40];
-  const form = formal ? (q.t === 1 ? 'short message' : 'email') : q.t === 1 ? 'short response' : q.t === 2 ? 'paragraph' : 'short argument';
+  const form = formal ? (q.t === 1 ? 'short message' : 'email') : q.t === 1 ? 'few sentences' : q.t === 2 ? 'paragraph' : 'short opinion text';
   const gap = q.p.split('\n').slice(1).join(' ').match(/[^.!?]*_{2,}[^.!?]*[.!?]?/)?.[0]?.trim();
   const instruction = gap
-    ? `First complete this sentence in your own draft: “${gap}”. Then write a ${form} about ${context}: ${angle}. Practise ${title.toLowerCase()} throughout your response.`
-    : `Write a ${form} about ${context}: ${angle}. Your focus is ${title.toLowerCase()}. ${formal ? 'Address a suitable reader, explain your purpose, and use an appropriate greeting and closing.' : 'Make your main point clear and support it with a relevant example.'}`;
-  const specific = formal ? 'My tone and wording suit the reader and purpose.' : organisation ? 'My ideas follow a logical order with useful links.' : language ? `I checked my use of ${title.toLowerCase()}.` : 'My wording is clear, precise, and appropriate.';
+    ? `1. Fill in the missing word: “${gap}”\n2. Add more sentences about the same situation. ${angle}\n3. Read your answer again. Check that it makes sense.`
+    : `Write ${form === 'few sentences' ? 'a few sentences' : form === 'email' ? 'an email' : `a ${form}`} about ${context}.\n1. ${angle}\n2. ${formal ? 'Say who you are writing to. Start with a greeting and end politely.' : 'Add a reason or an example.'}\n3. Read your answer again. Check spelling and punctuation.`;
+  const specific = formal ? 'My message is polite and clear.' : organisation ? 'My ideas are in a clear order.' : language ? 'I checked the words and sentence patterns.' : 'My words are clear and easy to understand.';
   const model = gap ? gap.replace(/_{2,}/, q.a) : q.a;
-  const explanation = formal ? 'Notice the respectful wording and how the purpose is communicated without sounding demanding.' : organisation ? 'Notice how the example connects ideas or presents the main point. Use the same principle, not necessarily the same words.' : language ? `Notice the ${title.toLowerCase()} in this example. Check the same feature in your draft.` : 'Notice the clear, specific wording. Compare meaning and style, rather than copying the example.';
-  return { title, instruction, goals, model, explanation, checks: ['I answered the task and included supporting detail.', specific, 'I checked grammar, spelling, and punctuation.'] };
+  const explanation = formal ? 'This example is polite and says clearly what the writer wants. Check if your message does the same.' : organisation ? 'This example puts the ideas in a clear order. Check the order of your own ideas.' : language ? 'Look at the words and sentence pattern in this example. Check the same part of your answer.' : 'This example is clear and specific. Try to make your own answer easy to understand too.';
+  return { title, instruction, goals, model, explanation, checks: ['I answered the question and added a reason or detail.', specific, 'I checked spelling and punctuation.'] };
 }
 
 if (typeof document !== 'undefined') (() => {
@@ -29,9 +29,9 @@ if (typeof document !== 'undefined') (() => {
   const task = document.createElement('p'); task.id = 'writing-task'; panel.prepend(task);
   const counter = document.createElement('p'); counter.id = 'writing-word-count'; input.after(counter);
   const guidance = panel.querySelector('textarea + p + p');
-  guidance.textContent = 'Write first, then do the separate knowledge check. Your draft is saved, but is not automatically graded.';
+  guidance.textContent = 'First write your answer. Then choose an answer in a short quiz. Your writing is saved, but the quiz score does not grade your writing.';
   const review = document.createElement('section'); review.className = 'writing-review';
-  review.innerHTML = '<h3>Compare, revise, and self-check</h3><p class="writing-model-label">Focus example—not the only valid answer</p><blockquote id="writing-model"></blockquote><p id="writing-explanation"></p><p id="writing-feedback" role="status"></p><label for="writing-revision">Your revised response</label><textarea id="writing-revision" rows="5" maxlength="2400" placeholder="Improve your response here…"></textarea><p id="writing-revision-count"></p><fieldset id="writing-checklist"><legend>Review your own writing</legend></fieldset><button id="writing-save-review" class="secondary" type="button">Save reviewed writing</button><p id="writing-review-status" role="status"></p>';
+  review.innerHTML = '<h3>Read the example, then check your answer</h3><p class="writing-model-label">One example. Your answer can be different.</p><blockquote id="writing-model"></blockquote><p id="writing-explanation"></p><p id="writing-feedback" role="status"></p><label for="writing-revision">Your improved answer</label><textarea id="writing-revision" rows="5" maxlength="2400" placeholder="Improve your response here…"></textarea><p id="writing-revision-count"></p><fieldset id="writing-checklist"><legend>Review your own writing</legend></fieldset><button id="writing-save-review" class="secondary" type="button">Save my answer</button><p id="writing-review-status" role="status"></p>';
   panel.append(review);
   const knowledge = document.createElement('p'); knowledge.className = 'writing-knowledge'; $('#answer-options').before(knowledge);
   let activeId = '';
@@ -58,23 +58,23 @@ if (typeof document !== 'undefined') (() => {
     knowledge.hidden = q?.s !== 'Writing' || !P.revealed && !P.checked;
     if (q?.s !== 'Writing') return;
     const content = writingTask(q), item = entry();
-    $('#practice-score').textContent = `${Number(st.correctBySkillTier.Writing?.[P.tier - 1]) || 0} / 100 knowledge checks`;
+    $('#practice-score').textContent = `${Number(st.correctBySkillTier.Writing?.[P.tier - 1]) || 0} / 100 quiz answers correct`;
     $('#question-text').textContent = content.title;
     task.textContent = content.instruction;
-    counter.textContent = `${writingWords(P.draft)} words · Practice target ${content.goals.join('–')} words (not an exam limit)`;
+    counter.textContent = `${writingWords(P.draft)} words · Aim for ${content.goals.join('–')} words (a guide, not a rule)`;
     input.readOnly = !!item?.original;
-    panel.querySelector('label[for="writing-response"]').textContent = item?.original ? 'Your original response' : 'Write your response';
-    $('#show-writing-samples').textContent = 'Submit draft & open knowledge check';
+    panel.querySelector('label[for="writing-response"]').textContent = item?.original ? 'Your first answer' : 'Write your answer';
+    $('#show-writing-samples').textContent = 'Save my writing & start the quiz';
     $('#show-writing-samples').hidden = !!P.revealed || !!P.checked;
     review.hidden = !P.checked || !item?.original;
-    knowledge.textContent = `Knowledge check (separate from your writing): ${q.p.split('\n').slice(1).join(' ') || q.p}`;
+    knowledge.textContent = `Quick quiz: ${q.p.split('\n').slice(1).join(' ') || q.p}`;
     if (P.checked) {
-      $('#practice-score').textContent = `${Number(st.correctBySkillTier.Writing?.[P.tier - 1]) || 0} / 100 knowledge checks`;
-      $('#answer-result').textContent = `${P.selected === q.a ? 'Knowledge check correct.' : 'Knowledge check needs review; you will retry it at the end of the tier.'} Your own writing has not been graded.`;
+      $('#practice-score').textContent = `${Number(st.correctBySkillTier.Writing?.[P.tier - 1]) || 0} / 100 quiz answers correct`;
+      $('#answer-result').textContent = `${P.selected === q.a ? 'Quiz answer correct.' : 'Not quite. You can try this quiz again at the end of the tier.'} This quiz score does not grade your writing.`;
       if (item?.original) {
         $('#writing-model').textContent = content.model;
         $('#writing-explanation').textContent = content.explanation;
-        $('#writing-feedback').textContent = writingWords(item.original) < content.goals[0] ? 'Your draft is shorter than the practice target. Consider adding a reason, example, or explanation.' : 'Review the checklist below. Length alone does not show writing quality.';
+        $('#writing-feedback').textContent = writingWords(item.original) < content.goals[0] ? 'Try adding a reason or an example to make your answer longer.' : 'Read your answer again. Use the three checks below.';
         if ($('#writing-revision').value !== (item.revision || item.original)) $('#writing-revision').value = item.revision || item.original;
         $('#writing-revision-count').textContent = `${writingWords($('#writing-revision').value)} words`;
         $('#writing-checklist').replaceChildren();
@@ -83,13 +83,13 @@ if (typeof document !== 'undefined') (() => {
           const label = document.createElement('label'), box = document.createElement('input');
           box.type = 'checkbox'; box.dataset.check = String(i); box.checked = !!item.checks?.[i]; label.append(box, document.createTextNode(text)); $('#writing-checklist').append(label);
         });
-        $('#writing-review-status').textContent = ready() ? 'Self-reviewed and saved. This is not a teacher grade.' : 'Review or improve your response, check each item, then save before continuing.';
+        $('#writing-review-status').textContent = ready() ? 'Saved. Press Next exercise to continue. This is not a teacher grade.' : 'Improve your answer if needed. Tick the three boxes, then press Save my answer.';
         $('#check-answer').disabled = !ready();
       }
     }
   };
   input.addEventListener('input', () => {
-    counter.textContent = `${writingWords(input.value)} words · Practice target ${writingTask(current()).goals.join('–')} words`;
+    counter.textContent = `${writingWords(input.value)} words · Aim for ${writingTask(current()).goals.join('–')} words`;
     const q = current(), draft = input.value;
     clearTimeout(writingSaveTimer);
     writingSaveTimer = setTimeout(() => store({ draft }, q), 350);
@@ -108,7 +108,7 @@ if (typeof document !== 'undefined') (() => {
     const q = current(), revision = event.target.value;
     if (entry()) entry().completedAt = null;
     $('#check-answer').disabled = true;
-    $('#writing-review-status').textContent = 'Revision changed. Save your self-review again before continuing.';
+    $('#writing-review-status').textContent = 'You changed your answer. Press Save my answer again when you are ready.';
     clearTimeout(writingSaveTimer);
     writingSaveTimer = setTimeout(() => store({ revision, completedAt: null }, q), 350);
   });
@@ -119,12 +119,12 @@ if (typeof document !== 'undefined') (() => {
   $('#writing-save-review').addEventListener('click', () => {
     const checks = [...$('#writing-checklist').querySelectorAll('input')].map(box => box.checked);
     const revision = $('#writing-revision').value.trim();
-    if (!revision || !checks.every(Boolean)) { $('#writing-review-status').textContent = 'Add your response and check all three review items first.'; return; }
+    if (!revision || !checks.every(Boolean)) { $('#writing-review-status').textContent = 'Write your answer and tick the three boxes first.'; return; }
     clearTimeout(writingSaveTimer); store({ revision, checks, completedAt: Date.now() }); draw(); render();
   });
   $('#check-answer').addEventListener('click', event => {
     if (current()?.s === 'Writing' && P.checked && entry()?.original && !ready()) {
-      event.stopImmediatePropagation(); $('#writing-review-status').textContent = 'Save your self-reviewed writing before continuing.';
+      event.stopImmediatePropagation(); $('#writing-review-status').textContent = 'Tick the three boxes and save your answer first.';
     }
   }, true);
   $('#close-practice').addEventListener('click', () => {
