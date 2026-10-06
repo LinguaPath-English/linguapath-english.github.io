@@ -9,7 +9,7 @@ function progressChange(base, next) {
   for (const key of new Set([...Object.keys(base), ...Object.keys(next)])) {
     if (sameProgress(base[key], next[key])) continue;
     before[key] = base[key]; after[key] = next[key];
-    if (['profile', 'practiceSessions', 'correctBySkillTier', 'missedBySkillTier', 'sessionCompletedAt'].includes(key)) {
+    if (['profile', 'practiceSessions', 'correctBySkillTier', 'missedBySkillTier', 'sessionCompletedAt', 'writingPortfolio'].includes(key)) {
       before[key] = {}; after[key] = {};
       for (const item of new Set([...Object.keys(base[key] || {}), ...Object.keys(next[key] || {})])) {
         if (sameProgress(base[key]?.[item], next[key]?.[item])) continue;
@@ -32,7 +32,7 @@ function mergeProgress(remote, base, next) {
   const result = cloneProgress(remote);
   const special = new Set(['_savedAt', '_syncReceipts', 'correct', 'correctByTier', 'correctBySkillTier',
     'exercisesCompleted', 'lessons', 'today', 'dayKey', 'profile', 'mistakes', 'missedBySkillTier',
-    'practiceSession', 'practiceSessions', 'sessionCompletedAt', 'quoteUsed']);
+    'practiceSession', 'practiceSessions', 'sessionCompletedAt', 'quoteUsed', 'writingPortfolio']);
   for (const key of Object.keys(next)) {
     if (!special.has(key) && !sameProgress(next[key], base[key])) result[key] = cloneProgress({ value: next[key] }).value;
   }
@@ -79,6 +79,12 @@ function mergeProgress(remote, base, next) {
   const latest = Object.values(result.practiceSessions).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
   result.practiceSession = latest || null;
   result.lastActivityAt = Math.max(remote.lastActivityAt || 0, next.lastActivityAt || 0);
+  result.writingPortfolio = cloneProgress(remote.writingPortfolio);
+  for (const [id, item] of Object.entries(next.writingPortfolio || {})) {
+    if (sameProgress(item, base.writingPortfolio?.[id])) continue;
+    const other = result.writingPortfolio[id];
+    if (!other || (item.updatedAt || 0) >= (other.updatedAt || 0)) result.writingPortfolio[id] = cloneProgress(item);
+  }
   // Completing the daily goal across devices should still ignite today's streak.
   if (result.today >= 10 && result.streakDay !== result.dayKey) {
     const last = Math.max(remote.lastStreakAt || 0, next.lastStreakAt || 0);

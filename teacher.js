@@ -30,6 +30,12 @@ function reviewOverview(state) {
   }).join('')}</ul></details>`;
 }
 
+function writingOverview(state) {
+  const items = Object.entries(state.writingPortfolio || {}).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));
+  if (!items.length) return '';
+  return `<details class="teacher-writing"><summary>Writing portfolio: ${items.length} responses (${items.filter(([,item])=>item.completedAt).length} self-reviewed)</summary><p>Self-review is not a teacher grade.</p>${items.map(([id,item])=>`<details><summary>${escapeHtml(id.replaceAll(':',' · '))} · ${item.completedAt ? 'Self-reviewed' : 'In progress'}</summary><h4>Original</h4><p>${escapeHtml(item.original || item.draft || '')}</p>${item.revision ? `<h4>Latest revision</h4><p>${escapeHtml(item.revision)}</p>` : ''}<small>Saved ${escapeHtml(formatDate(item.updatedAt))}</small></details>`).join('')}</details>`;
+}
+
 async function teacherToken() {
   if (teacherSession?.expires_at > Date.now() / 1000 + 60) return teacherSession.access_token;
   if (!teacherSession?.refresh_token) throw new Error('Teacher session expired. Sign in again.');
@@ -55,7 +61,7 @@ function renderStudents() {
     const state = row.state || {};
     const action = row.user_id === teacherSession.user?.id ? '—' : `<button class="teacher-delete-button" type="button" data-delete-user="${escapeHtml(row.user_id)}">Delete</button>`;
     const activity = state.lastActivityAt ? formatDate(state.lastActivityAt) : 'No exercise activity recorded';
-    return `<tr><td><strong>${escapeHtml(state.profile?.name || 'Learner')}</strong></td><td>${escapeHtml(row.email || '')}</td><td>${Number(state.exercisesCompleted) || 0}</td><td>${Number(state.correct) || 0}</td><td>${skillOverview(state)}</td><td>${reviewOverview(state)}</td><td>${Number(state.streak) || 0} days</td><td>${escapeHtml(activity)}<small class="teacher-skills">Saved ${escapeHtml(formatDate(row.updated_at))}</small></td><td>${action}</td></tr>`;
+    return `<tr><td><strong>${escapeHtml(state.profile?.name || 'Learner')}</strong></td><td>${escapeHtml(row.email || '')}</td><td>${Number(state.exercisesCompleted) || 0}</td><td>${Number(state.correct) || 0}</td><td>${skillOverview(state)}${writingOverview(state)}</td><td>${reviewOverview(state)}</td><td>${Number(state.streak) || 0} days</td><td>${escapeHtml(activity)}<small class="teacher-skills">Saved ${escapeHtml(formatDate(row.updated_at))}</small></td><td>${action}</td></tr>`;
   }).join('');
   $('#teacher-empty').hidden = studentRows.length > 0;
   $('#teacher-filter-empty').hidden = !studentRows.length || !!visible.length;
