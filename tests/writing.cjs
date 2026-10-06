@@ -1,0 +1,36 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const root = path.join(__dirname, '..');
+const context = vm.createContext({ console });
+vm.runInContext(fs.readFileSync(path.join(root, 'writing.js'), 'utf8'), context);
+vm.runInContext(fs.readFileSync(path.join(root, 'progress-sync.js'), 'utf8'), context);
+const questions = JSON.parse(fs.readFileSync(path.join(root, 'questions.json'), 'utf8')).filter(q => q.skill === 'Writing');
+assert.equal(questions.length, 300);
+const tasks = questions.map(q => context.writingTask({ id: `Writing:${q.tier}:${q.number}`, t: q.tier, p: q.prompt, a: q.answer }));
+assert.equal(new Set(tasks.map(task => task.instruction)).size, 300);
+for (const task of tasks) {
+  assert.ok(task.instruction.length > 90);
+  assert.ok(task.model && task.explanation);
+  assert.equal(task.checks.length, 3);
+  assert.ok(!task.model.includes('__'));
+  assert.ok(task.goals[1] > task.goals[0]);
+}
+assert.equal(vm.runInContext("writingWords('  A clear\\nshort response. ')", context), 4);
+const base = { writingPortfolio: {} };
+const remote = { writingPortfolio: { 'Writing:1:1': { original: 'First device', updatedAt: 3 } } };
+const next = { writingPortfolio: { 'Writing:1:2': { original: 'Second device', updatedAt: 2 } } };
+const delta = context.progressChange(base, next);
+const merged = context.mergeProgress(remote, delta.base, delta.next);
+assert.equal(Object.keys(merged.writingPortfolio).length, 2);
+const stale = context.mergeProgress(remote, base, { writingPortfolio: { 'Writing:1:1': { original: 'Older', updatedAt: 1 } } });
+assert.equal(stale.writingPortfolio['Writing:1:1'].original, 'First device');
+assert.equal(context.writingTask({id:'Writing:1:22',t:1,p:'Past Simple\nHe ___ late yesterday.',a:'arrived'}).model, 'He arrived late yesterday.');
+const teacher = vm.createContext({ document: {}, Intl, Date });
+vm.runInContext(fs.readFileSync(path.join(root, 'teacher.js'), 'utf8').split('async function teacherToken')[0], teacher);
+const html = teacher.writingOverview({writingPortfolio:{'Writing:1:1':{original:'<script>not HTML</script>',revision:'A clearer response.',updatedAt:1,completedAt:1}}});
+assert.ok(html.includes('&lt;script&gt;'));
+assert.ok(!html.includes('<script>'));
+assert.ok(html.includes('A clearer response.'));
+console.log('All 300 guided tasks, word counts, completed model sentences, and portfolio merge checks passed.');
