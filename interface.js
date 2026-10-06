@@ -55,12 +55,20 @@
   footer.after(rules);
 
   const renderBeforePolish = render;
+  const resumeTarget = () => Object.values(st.practiceSessions || {}).filter(saved =>
+    saved && tierUnlocked(saved.tier) && (st.sessionCompletedAt?.[`${saved.skill}:${saved.tier}`] || 0) < (saved.updatedAt || 1)
+  ).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0] || st.practiceSession;
+  document.querySelectorAll('[data-action="practice"]').forEach(button => button.addEventListener('click', event => {
+    event.stopImmediatePropagation();
+    const saved = resumeTarget();
+    openPractice(saved?.skill || 'Listening', saved || null);
+  }, true));
   render = () => {
     renderBeforePolish();
     welcome.hidden = !window.__lpCloudUser || !!st.onboardingSeen || (Number(st.exercisesCompleted) || 0) > 0;
     document.body.classList.toggle('dark', !!st.profile.dark);
-    const saved = st.practiceSession;
-    $('#today [data-action="practice"]').innerHTML = `${saved ? 'Resume practice' : 'Start practicing'} <span aria-hidden="true">→</span>`;
+    const saved = resumeTarget();
+    $('#today [data-action="practice"]').innerHTML = `${saved ? 'Continue practice' : 'Start practicing'} <span aria-hidden="true">→</span>`;
     resumeHint.textContent = saved
       ? `${saved.skill} · Tier ${saved.tier} · ${saved.phase === 'review' ? 'Missed-question review' : `Exercise ${saved.i + 1}`}`
       : 'Ten exercises. One small step forward.';

@@ -48,6 +48,8 @@ The publishable key is intended for browser use; database access is restricted b
 
 Run `node tests/smoke.cjs` to check save status, teacher controls, and answer feedback without touching real accounts.
 
+Run `node tests/progress-sync.cjs` for concurrent-device saves, conflicting writes, offline reloads, retry deduplication, and reset protection. Progress saves use a persistent per-account outbox and conditional updates of the existing `student_progress` table; no additional SQL migration is needed.
+
 ## Deploy with GitHub Pages
 
 The live site is served from the repository’s `main` branch. To publish changes, push or merge them to `main`, then check the repository’s **Settings → Pages** to confirm the Pages source is configured for the branch and root folder. GitHub Pages publishes the static files; no build command is needed.

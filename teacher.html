@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LinguaPath · Teacher progress</title>
   <link rel="stylesheet" href="style.css?v=20261003-1" />
-  <link rel="stylesheet" href="improvements.css?v=20261005-2" />
+  <link rel="stylesheet" href="improvements.css?v=20261005-3" />
   <link rel="stylesheet" href="teacher.css?v=20261003-1" />
-  <link rel="stylesheet" href="teacher-upgrades.css?v=20261005-1" />
+  <link rel="stylesheet" href="teacher-upgrades.css?v=20261005-3" />
 </head>
 <body class="teacher-page">
   <main class="teacher-shell">
@@ -18,12 +18,12 @@
       <div id="teacher-summary" class="teacher-summary"></div>
       <div class="teacher-tools"><label for="teacher-search">Find a student<input id="teacher-search" type="search" placeholder="Name or email" /></label><button id="teacher-export" class="secondary" type="button" disabled>Export all as CSV</button></div>
       <p id="teacher-dashboard-message" class="teacher-error" role="status" aria-live="polite"></p>
-      <div class="teacher-table-wrap"><table><thead><tr><th scope="col">Student</th><th scope="col">Email</th><th scope="col">Exercises</th><th scope="col">Correct</th><th scope="col">Skills</th><th scope="col">Streak</th><th scope="col">Last saved</th><th scope="col">Account</th></tr></thead><tbody id="teacher-rows"></tbody></table></div>
+      <div class="teacher-table-wrap"><table><thead><tr><th scope="col">Student</th><th scope="col">Email</th><th scope="col">Exercises</th><th scope="col">Correct</th><th scope="col">Skills & tiers</th><th scope="col">Missed questions</th><th scope="col">Streak</th><th scope="col">Last activity</th><th scope="col">Account</th></tr></thead><tbody id="teacher-rows"></tbody></table></div>
       <p id="teacher-empty" class="muted" hidden>No student progress has been saved yet.</p><p id="teacher-filter-empty" class="muted" hidden>No students match that search.</p>
       <button id="teacher-logout" class="text-button teacher-logout" type="button">Sign out of teacher view</button>
     </section>
   </main>
   <dialog id="teacher-delete-dialog" class="teacher-delete-dialog" aria-labelledby="teacher-delete-title"><h2 id="teacher-delete-title">Delete student account?</h2><p id="teacher-delete-description"></p><p>This permanently deletes the login and all saved practice. It cannot be undone.</p><label for="teacher-delete-confirm">Type the student’s email to confirm<input id="teacher-delete-confirm" type="email" autocomplete="off" /></label><p id="teacher-delete-error" class="teacher-error" role="alert"></p><div class="teacher-dialog-actions"><button id="teacher-delete-cancel" class="secondary" type="button">Cancel</button><button id="teacher-delete-submit" class="teacher-danger" type="button" disabled>Delete account</button></div></dialog>
-  <script src="teacher.js?v=20261005-1"></script>
+  <script src="teacher.js?v=20261005-3"></script>
 </body>
 </html>

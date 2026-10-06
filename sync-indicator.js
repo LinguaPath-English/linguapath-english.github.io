@@ -9,6 +9,10 @@ function showSync(message, detail = message, canRetry = false) {
   syncLabel.textContent = matchMedia('(max-width: 600px)').matches && message === 'Saved to your account' ? 'Saved' : message;
   syncLabel.title = detail;
   syncRetry.hidden = !canRetry;
+  const practiceStatus = document.querySelector('#practice-save-status');
+  const practiceRetry = document.querySelector('#practice-sync-retry');
+  if (practiceStatus) { practiceStatus.textContent = syncLabel.textContent; practiceStatus.title = detail; }
+  if (practiceRetry) practiceRetry.hidden = !canRetry;
   saveFailed = canRetry;
 }
 
@@ -26,7 +30,7 @@ window.lpSaveProgress = state => {
     if (revision === saveRevision) {
       saving = false;
       if (ok) showSaved();
-      else showSync('Save failed', 'Progress is on this device. Select Retry to save it to your account.', true);
+      else showSync('Saved on this device · Retry sync', 'Keep using this device. Select Retry to save pending progress to your account.', true);
     }
     return ok;
   });
@@ -34,6 +38,10 @@ window.lpSaveProgress = state => {
 
 syncRetry.addEventListener('click', () => {
   if (window.__lpCloudUser) window.lpCloudPending = window.lpSaveProgress(st);
+});
+document.querySelector('#practice-sync-retry')?.addEventListener('click', () => syncRetry.click());
+window.addEventListener('offline', () => {
+  if (window.__lpCloudUser) showSync('Offline · saved on this device', 'Answers stay on this device until the connection returns.', true);
 });
 window.addEventListener('online', () => {
   if (saveFailed && window.__lpCloudUser) syncRetry.click();

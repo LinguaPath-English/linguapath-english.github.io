@@ -5,6 +5,7 @@
 .teacher-table-wrap table{min-width:940px}
 .teacher-table-wrap td{vertical-align:middle}
 .teacher-skills{display:block;max-width:210px;line-height:1.5;color:var(--muted)}
+.teacher-skill,.teacher-review{min-width:170px;font-size:12px;line-height:1.6}.teacher-skill summary,.teacher-review summary{cursor:pointer;padding:4px 0;font-weight:700}.teacher-skill progress{display:block;width:100%;height:7px;margin:4px 0 8px;accent-color:var(--green)}.teacher-review{max-width:340px}.teacher-review ul{padding-left:18px;max-height:260px;overflow:auto}.teacher-review li{margin-bottom:12px;white-space:pre-line}
 .teacher-delete-button{padding:8px 10px;border:1px solid #b56e67;border-radius:9px;background:transparent;color:#9d4942;font-size:12px;font-weight:700}
 .teacher-delete-button:hover{background:#faeae8}
 .teacher-delete-dialog{width:min(460px,calc(100% - 28px));padding:28px;border:1px solid var(--line);border-radius:22px;background:var(--surface);color:var(--ink);box-shadow:0 24px 70px #11251d36}

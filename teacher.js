@@ -6,6 +6,7 @@ const teacherAuth = (path, options = {}) => fetch(`${TEACHER_URL}/auth/v1/${path
 });
 let teacherSession = null;
 let studentRows = [];
+let teacherQuestions = [];
 let selectedStudent = null;
 const $ = selector => document.querySelector(selector);
 const showError = message => { $('#teacher-error').textContent = message; };
@@ -13,6 +14,21 @@ const showMessage = message => { $('#teacher-dashboard-message').textContent = m
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const formatDate = value => value ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '—';
 const skillTotal = (state, skill) => (state.correctBySkillTier?.[skill] || []).reduce((sum, count) => sum + (Number(count) || 0), 0);
+const missedQuestions = state => Object.values(state.missedBySkillTier || {}).flat();
+function skillOverview(state) {
+  return ['Listening', 'Reading', 'Writing', 'Speaking'].map(skill => {
+    const counts = [0, 1, 2].map(i => Math.min(100, Number(state.correctBySkillTier?.[skill]?.[i]) || 0));
+    return `<details class="teacher-skill"><summary>${skill}: ${skillTotal(state, skill)} / 300</summary>${counts.map((count, i) => `<div>Tier ${i + 1}: ${count} / 100<progress max="100" value="${count}" aria-label="${skill} tier ${i + 1} correct answers"></progress></div>`).join('')}</details>`;
+  }).join('');
+}
+function reviewOverview(state) {
+  const ids = [...new Set(missedQuestions(state))];
+  if (!ids.length) return '<span class="muted">Up to date</span>';
+  return `<details class="teacher-review"><summary>${ids.length} to review</summary><ul>${ids.map(id => {
+    const question = teacherQuestions.find(q => `${q.skill}:${q.tier}:${q.number}` === id);
+    return `<li>${escapeHtml(question ? `${question.skill} · Tier ${question.tier} · Question ${question.number}: ${question.prompt}` : id)}</li>`;
+  }).join('')}</ul></details>`;
+}
 
 async function teacherToken() {
   if (teacherSession?.expires_at > Date.now() / 1000 + 60) return teacherSession.access_token;
@@ -37,9 +53,9 @@ function renderStudents() {
   const visible = studentRows.filter(row => `${row.state?.profile?.name || ''} ${row.email || ''}`.toLowerCase().includes(search));
   $('#teacher-rows').innerHTML = visible.map(row => {
     const state = row.state || {};
-    const skills = ['Listening', 'Reading', 'Writing', 'Speaking'].map(skill => `${skill}: ${skillTotal(state, skill)}`).join(' · ');
     const action = row.user_id === teacherSession.user?.id ? '—' : `<button class="teacher-delete-button" type="button" data-delete-user="${escapeHtml(row.user_id)}">Delete</button>`;
-    return `<tr><td><strong>${escapeHtml(state.profile?.name || 'Learner')}</strong></td><td>${escapeHtml(row.email || '')}</td><td>${Number(state.exercisesCompleted) || 0}</td><td>${Number(state.correct) || 0}</td><td><small class="teacher-skills">${escapeHtml(skills)}</small></td><td>${Number(state.streak) || 0} days</td><td>${escapeHtml(formatDate(row.updated_at))}</td><td>${action}</td></tr>`;
+    const activity = state.lastActivityAt ? formatDate(state.lastActivityAt) : 'No exercise activity recorded';
+    return `<tr><td><strong>${escapeHtml(state.profile?.name || 'Learner')}</strong></td><td>${escapeHtml(row.email || '')}</td><td>${Number(state.exercisesCompleted) || 0}</td><td>${Number(state.correct) || 0}</td><td>${skillOverview(state)}</td><td>${reviewOverview(state)}</td><td>${Number(state.streak) || 0} days</td><td>${escapeHtml(activity)}<small class="teacher-skills">Saved ${escapeHtml(formatDate(row.updated_at))}</small></td><td>${action}</td></tr>`;
   }).join('');
   $('#teacher-empty').hidden = studentRows.length > 0;
   $('#teacher-filter-empty').hidden = !studentRows.length || !!visible.length;
@@ -57,6 +73,12 @@ async function loadStudents() {
       return false;
     }
     studentRows = await response.json();
+    if (!teacherQuestions.length) {
+      try {
+        const questions = await fetch('questions.json');
+        if (questions.ok) teacherQuestions = (await questions.json()).filter(q => q.skill && q.prompt);
+      } catch { /* Reports remain usable if the question descriptions cannot load. */ }
+    }
     renderStudents();
     return true;
   } catch (error) {
@@ -71,11 +93,11 @@ const csvCell = value => {
   return `"${text.replaceAll('"', '""')}"`;
 };
 function exportStudents() {
-  const headers = ['Name', 'Email', 'Exercises', 'Correct', 'Listening correct', 'Reading correct', 'Writing correct', 'Speaking correct', 'Streak days', 'Last saved'];
+  const headers = ['Name', 'Email', 'Exercises', 'Correct', 'Listening correct', 'Reading correct', 'Writing correct', 'Speaking correct', 'Pending review', 'Streak days', 'Last exercise activity', 'Last saved'];
   const lines = studentRows.map(row => {
     const state = row.state || {};
     return [state.profile?.name || 'Learner', row.email || '', Number(state.exercisesCompleted) || 0, Number(state.correct) || 0,
-      ...['Listening', 'Reading', 'Writing', 'Speaking'].map(skill => skillTotal(state, skill)), Number(state.streak) || 0, row.updated_at || ''];
+      ...['Listening', 'Reading', 'Writing', 'Speaking'].map(skill => skillTotal(state, skill)), missedQuestions(state).length, Number(state.streak) || 0, state.lastActivityAt ? new Date(state.lastActivityAt).toISOString() : '', row.updated_at || ''];
   });
   const csv = [headers, ...lines].map(row => row.map(csvCell).join(',')).join('\r\n');
   const url = URL.createObjectURL(new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' }));

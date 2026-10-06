@@ -254,6 +254,7 @@ openPractice = (skill, resume = null) => {
 
 function completePracticeSession(skill, tier) {
   const sessions = practiceSessions();
+  st.sessionCompletedAt = { ...st.sessionCompletedAt, [sessionKey(skill, tier)]: Date.now() };
   delete sessions[sessionKey(skill, tier)];
   if (st.practiceSession?.skill === skill && st.practiceSession?.tier === tier) {
     st.practiceSession = Object.values(sessions).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0] || null;
@@ -289,6 +290,7 @@ checkButton.addEventListener('click', event => {
     setTimeout(() => completePracticeSession(skill, tier), 0);
   }
   if (!P.checked) {
+    st.lastActivityAt = Date.now();
     if (P.selected === question.a) st.missedBySkillTier[`${P.skill}:${P.tier}`] = pending.filter(item => item !== id);
     else if (!pending.includes(id)) pending.push(id);
     const skill = P.skill, tier = P.tier, state = st, correct = P.selected === question.a;
