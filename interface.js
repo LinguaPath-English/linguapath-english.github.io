@@ -9,10 +9,10 @@
     $('#today [data-skill]')?.focus();
   });
   const paths = {
-    today: '<path d="m3 10 9-7 9 7v10H6V10m3 10v-7h6v7"/>',
-    journey: '<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h7a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8"/>',
-    skills: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
-    profile: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+    today: '<path d="m3 10 7.6-6.3a2.2 2.2 0 0 1 2.8 0L21 10M5 9v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M9 21v-6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6"/>',
+    journey: '<path d="M6 18h9a4 4 0 0 0 0-8H9a3 3 0 0 1 0-6h7"/><circle cx="5" cy="18" r="2.5" fill="currentColor" stroke="none"/><circle cx="18" cy="4" r="2.5"/><circle cx="12" cy="10" r="1.5" fill="currentColor" stroke="none"/>',
+    skills: '<path d="M3 4c4-1 7 0 9 2 2-2 5-3 9-2v15c-4-1-7 0-9 2-2-2-5-3-9-2Z"/><path d="M12 6c-4 4 4 5 4 8 0 3-7 3-4 7"/>',
+    profile: '<circle cx="12" cy="7.5" r="3.5"/><path d="M5 20v-1a7 7 0 0 1 14 0v1c-4 1-10 1-14 0Z"/>',
     Listening: '<path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/>',
     Reading: '<path d="M12 5v16M12 5C8 2 3 3 3 3v16s5-1 9 2c4-3 9-2 9-2V3s-5-1-9 2Z"/>',
     Writing: '<path d="m15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-5-5L4 14v6Z"/>',
