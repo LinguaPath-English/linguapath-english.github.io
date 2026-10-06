@@ -21,7 +21,7 @@ async function testSync() {
     addEventListener(name, handler) { events[name] = handler; }
   };
   vm.runInNewContext(read('sync-indicator.js'), {
-    document: { querySelector: selector => selector === '#sync-status' ? status : retry },
+    document: { querySelector: selector => selector === '#sync-status' ? status : selector === '#sync-retry' ? retry : null },
     window, st: {}, matchMedia: () => ({ matches: false }), Intl, Date
   });
   assert.equal(status.textContent, 'Loading progress…');
@@ -29,7 +29,7 @@ async function testSync() {
   events['lp:cloud-ready']({ detail: { updatedAt: new Date().toISOString() } });
   assert.equal(status.textContent, 'Saved to your account');
   assert.equal(await window.lpSaveProgress({}), false);
-  assert.equal(status.textContent, 'Save failed');
+  assert.equal(status.textContent, 'Saved on this device · Retry sync');
   assert.equal(retry.hidden, false);
   cloudOk = true;
   retry.click();
