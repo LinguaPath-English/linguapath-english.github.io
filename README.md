@@ -2,7 +2,7 @@
 
 LinguaPath is a lightweight English-practice website for Cambridge Linguaskill learners. It runs as a static site—there is no build step or package manager.
 
-**Live site:** https://stephmom.github.io/linguapath-web/
+**Live site:** https://linguapath-english.github.io/
 
 ## Features
 
