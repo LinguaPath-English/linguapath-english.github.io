@@ -35,12 +35,30 @@ for (let tier=1;tier<=3;tier++) {
   assert.equal(new Set(writing.map(q=>q.prompt+'|'+[...q.options].sort().join('|'))).size,100);
 }
 const changedSpeaking = bank.filter(q=>q.skill==='Speaking'&&q.previousQuestion);
-assert.equal(changedSpeaking.length,18);
-assert.ok(changedSpeaking.filter(q=>q.answer.length>Math.max(...q.options.filter(o=>o!==q.answer).map(o=>o.length))).length < 9);
+assert.equal(changedSpeaking.length,300);
+const curriculum=require('../speaking-curriculum.cjs');
+assert.equal(curriculum.length,300);
+for(const q of changedSpeaking) {
+  const expected=curriculum.find(item=>id(item)===id(q));
+  for(const key of ['prompt','answer','options','explanation']) assert.deepEqual(q[key],expected[key],id(q));
+  assert.ok(q.explanation.length>60,id(q));
+  assert.ok(!/best response|I don't know\.|^Maybe\.$/.test(q.prompt),id(q));
+  assert.ok(q.options.every(option=>option.length>=15),id(q));
+}
+for(let tier=1;tier<=3;tier++) {
+  const rows=changedSpeaking.filter(q=>q.tier===tier);
+  assert.equal(new Set(rows.map(q=>q.prompt)).size,100);
+  const longest=rows.filter(q=>q.answer.length>Math.max(...q.options.filter(o=>o!==q.answer).map(o=>o.length))).length;
+  const shortest=rows.filter(q=>q.answer.length<Math.min(...q.options.filter(o=>o!==q.answer).map(o=>o.length))).length;
+  assert.ok(longest<40,`Tier ${tier}: longest-answer cue`);
+  assert.ok(shortest<40,`Tier ${tier}: shortest-answer cue`);
+  assert.deepEqual(rows.reduce((counts,q)=>(counts[q.options.indexOf(q.answer)]++,counts),[0,0,0,0]),[25,25,25,25]);
+}
 const context = vm.createContext({});
 vm.runInContext(read('script.js').split('\n')[1],context);
 const parsed = context.parseQuestion(get('Speaking:1:1'));
-assert.ok(parsed.p.includes('Choose a response that covers all three points.'));
+assert.ok(parsed.p.includes('Choose the response that meets the stated goal.'));
+assert.ok(parsed.p.includes('Introduce yourself with all three details.'));
 assert.ok(parsed.explanation);
 const source=read('improvements.js');
 vm.runInContext(source.slice(source.indexOf('function savedQuestionForSession'),source.indexOf('function practiceSessions()')),context);
@@ -50,4 +68,16 @@ assert.equal(previous.a,'saw'); // already-graded answers keep their original qu
 assert.equal(context.savedQuestionForSession(current,{checked:false,updatedAt:1}),current);
 const snapshot={...previous,p:'A saved question snapshot'};
 assert.equal(context.savedQuestionForSession(current,{checked:true,question:snapshot}).p,snapshot.p);
+const speaking=context.parseQuestion(get('Speaking:1:2'));
+const legacyPrompt=speaking.previousQuestion.p.replace(/(Examiner: “[\s\S]*?”)[\s\S]*$/, '$1');
+context.Q=[speaking];
+context.st={mistakes:[{skill:'Speaking',tier:1,prompt:legacyPrompt}]};
+vm.runInContext(source.slice(source.indexOf('function missedList'),source.indexOf('function hasMissesInTier')),context);
+assert.equal(context.missedList('Speaking',1)[0],'Speaking:1:2');
+context.st.missedBySkillTier['Speaking:1']=[];
+assert.equal(context.missedList('Speaking',1).length,0); // do not resurrect cleared reviews
+context.Q=[context.parseQuestion(get('Reading:1:1'))];
+context.st={mistakes:[{skill:'Reading',tier:1}]};
+assert.equal(context.missedList('Reading',1).length,0); // ignore malformed legacy records
 console.log('All 1,200 stable IDs, answer integrity, 300 aligned writing tasks, duplicate removal, and graded-session compatibility passed.');
+console.log('All 300 authored speaking goals, explanations, balanced answer positions, and length-cue checks passed.');
