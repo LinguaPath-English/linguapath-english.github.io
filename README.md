@@ -1,6 +1,6 @@
 # LinguaPath
 
-Writing practice: all 300 writing lessons include guided tasks, practice word targets, a separate knowledge check, focus examples, and self-reviewed revisions. Original drafts and latest revisions sync with each account and appear in Profile → My writing portfolio and in teacher reports. Self-review and knowledge-check scores are not teacher grades or automated assessments of free writing. Existing progress is preserved. Run `node tests/writing.cjs` for task coverage and portfolio merge checks.
+Writing practice: all 300 lessons start with multiple-choice answers. After checking an answer, students can continue immediately or open optional writing practice with a prompt, example, word counter, autosave, and save button. No draft or review checkboxes are required to continue. Original writing and latest revisions sync with each account and appear in Profile → My writing portfolio and in teacher reports. Quiz scores do not grade free writing. Existing progress is preserved. Run `node tests/writing.cjs` for task coverage, optional-writing flow, and portfolio merge checks.
 
 LinguaPath is a lightweight English-practice website for Cambridge Linguaskill learners. It runs as a static site—there is no build step or package manager.
 

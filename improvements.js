@@ -73,7 +73,7 @@ draw = () => {
   writingPanel.style.display = writing ? 'block' : 'none';
   if (writingInput.value !== (P.draft || '')) writingInput.value = P.draft || '';
   compare.disabled = !(P.draft || '').trim();
-  answers.style.display = writing && !P.revealed && !P.checked ? 'none' : '';
+  answers.style.display = '';
   speakingPanel.style.display = speakingUnlocked ? 'block' : 'none';
   speakingPanel.querySelector('p').textContent = 'Correct! Practice saying the model answer aloud, record yourself, then listen back and check your pronunciation.';
   let model = document.querySelector('#speaking-model');
@@ -135,7 +135,7 @@ let priorExercise = 0;
 checkButton.addEventListener('click', () => {
   setTimeout(() => {
     if (!P.checked && P.i > priorExercise) {
-      P.draft = '';
+      if (P.skill !== 'Writing') P.draft = '';
       P.revealed = false;
       P.spoken = false;
       draw();

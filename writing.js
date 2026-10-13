@@ -26,14 +26,15 @@ if (typeof document !== 'undefined') (() => {
   const $ = s => document.querySelector(s), panel = $('#writing-practice'), input = $('#writing-response');
   input.maxLength = 2400;
   input.setAttribute('aria-describedby', 'writing-word-count');
+  const optional = document.createElement('details'); optional.className = 'writing-optional';
+  const summary = document.createElement('summary'); summary.textContent = 'Try writing your own answer (optional)'; optional.append(summary, panel);
+  $('#answer-result').after(optional);
   const task = document.createElement('p'); task.id = 'writing-task'; panel.prepend(task);
   const counter = document.createElement('p'); counter.id = 'writing-word-count'; input.after(counter);
   const guidance = panel.querySelector('textarea + p + p');
-  guidance.textContent = 'First write your answer. Then choose an answer in a short quiz. Your writing is saved, but the quiz score does not grade your writing.';
-  const review = document.createElement('section'); review.className = 'writing-review';
-  review.innerHTML = '<h3>Read the example, then check your answer</h3><p class="writing-model-label">One example. Your answer can be different.</p><blockquote id="writing-model"></blockquote><p id="writing-explanation"></p><p id="writing-feedback" role="status"></p><label for="writing-revision">Your improved answer</label><textarea id="writing-revision" rows="5" maxlength="2400" placeholder="Improve your response here…"></textarea><p id="writing-revision-count"></p><fieldset id="writing-checklist"><legend>Review your own writing</legend></fieldset><button id="writing-save-review" class="secondary" type="button">Save my answer</button><p id="writing-review-status" role="status"></p>';
-  panel.append(review);
-  const knowledge = document.createElement('p'); knowledge.className = 'writing-knowledge'; $('#answer-options').before(knowledge);
+  guidance.textContent = 'Extra practice: write your own answer or improve one you saved. You can skip this and continue. This is not automatically graded.';
+  const model = document.createElement('blockquote'); model.id = 'writing-model'; task.after(model);
+  const status = document.createElement('p'); status.id = 'writing-review-status'; status.setAttribute('role', 'status'); panel.append(status);
   let activeId = '';
   const entry = () => st.writingPortfolio?.[P.queue?.[P.i]?.id];
   const current = () => P.queue?.[P.i];
@@ -43,113 +44,79 @@ if (typeof document !== 'undefined') (() => {
     st.writingPortfolio[q.id] = { ...st.writingPortfolio[q.id], ...changes, updatedAt: Date.now() };
     savePracticeSession(true);
   };
-  const ready = () => {
+  const saveWriting = (explicit = false) => {
+    const q = current(), value = input.value;
+    if (q?.s !== 'Writing' || !P.checked || !value.trim()) return;
     const item = entry();
-    return item?.completedAt && item.revision?.trim();
+    if (!explicit && value === (item?.revision ?? item?.draft ?? item?.original ?? '')) return;
+    clearTimeout(writingSaveTimer);
+    P.draft = value;
+    store({ draft: value, original: item?.original || value, revision: value,
+      submittedAt: item?.submittedAt || Date.now(), ...(explicit ? { completedAt: Date.now() } : {}) }, q);
+    status.textContent = explicit ? 'Writing saved. You can continue to the next exercise.' : 'Draft saved. Check the account save status above for cloud sync.';
   };
   const beforeWriting = draw;
   draw = () => {
     const q = current();
     if (q?.s === 'Writing' && activeId !== q.id) {
+      const restoredDraft = entry()?.revision ?? entry()?.draft ?? entry()?.original ?? (activeId ? '' : P.draft || '');
       activeId = q.id;
-      P.draft = entry()?.draft ?? P.draft ?? '';
+      P.draft = restoredDraft;
+      optional.open = false;
     } else if (q?.s !== 'Writing') activeId = '';
     beforeWriting();
-    knowledge.hidden = q?.s !== 'Writing' || !P.revealed && !P.checked;
+    optional.hidden = q?.s !== 'Writing' || !P.checked;
     if (q?.s !== 'Writing') return;
     const content = writingTask(q), item = entry();
+    $('#answer-options').style.display = '';
     $('#practice-score').textContent = `${Number(st.correctBySkillTier.Writing?.[P.tier - 1]) || 0} / 100 quiz answers correct`;
-    $('#question-text').textContent = content.title;
+    $('#question-text').textContent = q.p;
     task.textContent = content.instruction;
-    counter.textContent = `${writingWords(P.draft)} words · Aim for ${content.goals.join('–')} words (a guide, not a rule)`;
-    input.readOnly = !!item?.original;
-    panel.querySelector('label[for="writing-response"]').textContent = item?.original ? 'Your first answer' : 'Write your answer';
-    $('#show-writing-samples').textContent = 'Save my writing & start the quiz';
-    $('#show-writing-samples').hidden = !!P.revealed || !!P.checked;
-    review.hidden = !P.checked || !item?.original;
-    knowledge.textContent = `Quick quiz: ${q.p.split('\n').slice(1).join(' ') || q.p}`;
-    if (P.checked) {
-      $('#practice-score').textContent = `${Number(st.correctBySkillTier.Writing?.[P.tier - 1]) || 0} / 100 quiz answers correct`;
-      $('#answer-result').textContent = `${P.selected === q.a ? 'Quiz answer correct.' : 'Not quite. You can try this quiz again at the end of the tier.'} This quiz score does not grade your writing.`;
-      if (item?.original) {
-        $('#writing-model').textContent = content.model;
-        $('#writing-explanation').textContent = content.explanation;
-        $('#writing-feedback').textContent = writingWords(item.original) < content.goals[0] ? 'Try adding a reason or an example to make your answer longer.' : 'Read your answer again. Use the three checks below.';
-        if ($('#writing-revision').value !== (item.revision || item.original)) $('#writing-revision').value = item.revision || item.original;
-        $('#writing-revision-count').textContent = `${writingWords($('#writing-revision').value)} words`;
-        $('#writing-checklist').replaceChildren();
-        const legend = document.createElement('legend'); legend.textContent = 'Review your own writing'; $('#writing-checklist').append(legend);
-        content.checks.forEach((text, i) => {
-          const label = document.createElement('label'), box = document.createElement('input');
-          box.type = 'checkbox'; box.dataset.check = String(i); box.checked = !!item.checks?.[i]; label.append(box, document.createTextNode(text)); $('#writing-checklist').append(label);
-        });
-        $('#writing-review-status').textContent = ready() ? 'Saved. Press Next exercise to continue. This is not a teacher grade.' : 'Improve your answer if needed. Tick the three boxes, then press Save my answer.';
-        $('#check-answer').disabled = !ready();
-      }
-    }
+    counter.textContent = `${writingWords(P.draft)} word${writingWords(P.draft) === 1 ? '' : 's'} · Aim for ${content.goals.join('–')} words (a guide, not a rule)`;
+    input.readOnly = false;
+    panel.querySelector('label[for="writing-response"]').textContent = 'Your answer';
+    $('#show-writing-samples').textContent = 'Save my writing';
+    $('#show-writing-samples').hidden = false;
+    model.textContent = `Example: ${content.model}`;
+    status.textContent = item?.completedAt ? 'Writing saved. You can continue to the next exercise.' : 'Writing is optional. Your draft saves as you type.';
   };
   input.addEventListener('input', () => {
-    counter.textContent = `${writingWords(input.value)} words · Aim for ${writingTask(current()).goals.join('–')} words`;
-    const q = current(), draft = input.value;
+    counter.textContent = `${writingWords(input.value)} word${writingWords(input.value) === 1 ? '' : 's'} · Aim for ${writingTask(current()).goals.join('–')} words`;
+    P.draft = input.value;
     clearTimeout(writingSaveTimer);
-    writingSaveTimer = setTimeout(() => store({ draft }, q), 350);
+    writingSaveTimer = setTimeout(() => saveWriting(), 350);
   });
   $('#show-writing-samples').addEventListener('click', event => {
     if (current()?.s !== 'Writing') return;
     event.stopImmediatePropagation();
-    if (!input.value.trim()) return;
-    clearTimeout(writingSaveTimer);
-    P.draft = input.value;
-    store({ draft: P.draft, original: entry()?.original || P.draft, submittedAt: entry()?.submittedAt || Date.now() });
-    P.revealed = true; draw(); savePracticeSession(true);
+    saveWriting(true); render();
   }, true);
-  $('#writing-revision').addEventListener('input', event => {
-    $('#writing-revision-count').textContent = `${writingWords(event.target.value)} words`;
-    const q = current(), revision = event.target.value;
-    if (entry()) entry().completedAt = null;
-    $('#check-answer').disabled = true;
-    $('#writing-review-status').textContent = 'You changed your answer. Press Save my answer again when you are ready.';
-    clearTimeout(writingSaveTimer);
-    writingSaveTimer = setTimeout(() => store({ revision, completedAt: null }, q), 350);
-  });
-  $('#writing-checklist').addEventListener('change', () => {
-    store({ checks: [...$('#writing-checklist').querySelectorAll('input')].map(box => box.checked), completedAt: null });
-    $('#check-answer').disabled = true;
-  });
-  $('#writing-save-review').addEventListener('click', () => {
-    const checks = [...$('#writing-checklist').querySelectorAll('input')].map(box => box.checked);
-    const revision = $('#writing-revision').value.trim();
-    if (!revision || !checks.every(Boolean)) { $('#writing-review-status').textContent = 'Write your answer and tick the three boxes first.'; return; }
-    clearTimeout(writingSaveTimer); store({ revision, checks, completedAt: Date.now() }); draw(); render();
-  });
-  $('#check-answer').addEventListener('click', event => {
-    if (current()?.s === 'Writing' && P.checked && entry()?.original && !ready()) {
-      event.stopImmediatePropagation(); $('#writing-review-status').textContent = 'Tick the three boxes and save your answer first.';
-    }
+  $('#check-answer').addEventListener('click', () => {
+    if (current()?.s === 'Writing' && P.checked) saveWriting();
   }, true);
   $('#close-practice').addEventListener('click', () => {
     if (current()?.s !== 'Writing') return;
     clearTimeout(writingSaveTimer);
-    store(P.checked && entry()?.original ? { revision: $('#writing-revision').value } : { draft: input.value });
+    saveWriting();
   }, true);
   const flushWriting = () => {
     if (current()?.s !== 'Writing' || !$('#practice-modal').classList.contains('open')) return;
     clearTimeout(writingSaveTimer);
-    store(P.checked && entry()?.original ? { revision: $('#writing-revision').value } : { draft: input.value });
+    saveWriting();
   };
   window.addEventListener('pagehide', flushWriting);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flushWriting(); });
   const portfolio = document.createElement('details'); portfolio.className = 'writing-portfolio';
-  portfolio.innerHTML = '<summary>My writing portfolio</summary><p>Original and latest revised responses. Self-review is not a teacher assessment.</p><div></div>';
+  portfolio.innerHTML = '<summary>My writing portfolio</summary><p>Your saved writing and latest changes. Saved writing is not a teacher grade.</p><div></div>';
   $('#profile').append(portfolio);
   const beforePortfolio = render;
   render = () => {
     beforePortfolio(); const list = portfolio.querySelector('div'); list.replaceChildren();
     const records = Object.entries(st.writingPortfolio || {}).sort((a,b)=>(b[1].updatedAt||0)-(a[1].updatedAt||0));
-    portfolio.querySelector('summary').textContent = `My writing portfolio · ${records.filter(([,item])=>item.completedAt).length} self-reviewed`;
+    portfolio.querySelector('summary').textContent = `My writing portfolio · ${records.filter(([,item])=>item.completedAt).length} saved`;
     for (const [id, item] of records) {
       const detail = document.createElement('details'), title = document.createElement('summary');
-      title.textContent = `${id.replaceAll(':', ' · ')} · ${item.completedAt ? 'Self-reviewed' : 'In progress'}`; detail.append(title);
+      title.textContent = `${id.replaceAll(':', ' · ')} · ${item.completedAt ? 'Saved' : 'Draft'}`; detail.append(title);
       for (const [label, value] of [['Original', item.original || item.draft], ['Latest revision', item.revision]]) {
         if (!value) continue; const heading = document.createElement('h4'), text = document.createElement('p'); heading.textContent = label; text.textContent = value; detail.append(heading, text);
       }
