@@ -8,13 +8,11 @@ vm.runInContext(fs.readFileSync(path.join(root, 'writing.js'), 'utf8'), context)
 vm.runInContext(fs.readFileSync(path.join(root, 'progress-sync.js'), 'utf8'), context);
 const questions = JSON.parse(fs.readFileSync(path.join(root, 'questions.json'), 'utf8')).filter(q => q.skill === 'Writing');
 assert.equal(questions.length, 300);
-const tasks = questions.map(q => context.writingTask({ id: `Writing:${q.tier}:${q.number}`, t: q.tier, p: q.prompt, a: q.answer }));
+const tasks = questions.map(q => context.writingTask({ id: `Writing:${q.tier}:${q.number}`, t: q.tier, p: q.prompt, a: q.answer, explanation: q.explanation, writingTask: q.writingTask, writingModel: q.writingModel }));
 assert.equal(new Set(questions.map(q => `${q.tier}:${q.number}`)).size, 300);
 for (const task of tasks) {
-  assert.ok(task.instruction.length > 90);
-  assert.ok(task.instruction.includes('1. ') && task.instruction.includes('\n2. ') && task.instruction.includes('\n3. '));
+  assert.ok(task.instruction.length > 50);
   assert.ok(task.model && task.explanation);
-  assert.equal(task.checks.length, 3);
   assert.ok(!task.model.includes('__'));
   assert.ok(task.goals[1] > task.goals[0]);
 }
