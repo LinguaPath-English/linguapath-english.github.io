@@ -1,25 +1,12 @@
 // Guided practice, not an automatic writing examiner.
 const writingWords = text => (String(text || '').trim().match(/\S+/g) || []).length;
 function writingTask(q) {
-  const title = q.p.split('\n')[0], focus = title.toLowerCase();
-  const number = Number(q.id?.split(':').at(-1)) || 1;
-  const contexts = ['your study routine', 'a school event', 'a late delivery', 'learning online', 'your library', 'a group project', 'applying for a job', 'an activity in your town', 'a trip', 'late homework', 'a new course', 'buses and trains', 'a change at work', 'a helpful teacher', 'a local park', 'healthy habits', 'buying a phone', 'helping in your town', 'planning a meeting', 'protecting the environment'];
-  const context = contexts[(number - 1) % contexts.length];
-  const angles = ['Say what happened and why.', 'Describe a problem. Suggest a way to fix it.', 'Say what you think someone should do. Explain why.', 'Describe two choices. Say which you prefer and why.', 'Describe a change. Say what may happen next.'];
-  const angle = angles[Math.floor((number - 1) / 20) % angles.length];
-  const formal = /email|formal|request|apolog|invit|greeting|closing|complaint|thanks|enquir|congrat|sympathy|welcome/.test(focus);
-  const organisation = /cohes|link|transition|flow|paragraph|conclusion|introduction|argument|essay|summary|summaris/.test(focus);
-  const language = /tense|verb|passive|conditional|inversion|noun|sentence|grammar|punctuation|article|pronoun|adverb|adjective|hedg|nominali|modality|modal/.test(focus);
-  const goals = [[20, 40], [60, 100], [120, 180]][q.t - 1] || [20, 40];
-  const form = formal ? (q.t === 1 ? 'short message' : 'email') : q.t === 1 ? 'few sentences' : q.t === 2 ? 'paragraph' : 'short opinion text';
+  const title = q.p.split('\n')[0];
+  const goals = [[5, 25], [10, 40], [15, 60]][q.t - 1] || [5, 25];
   const gap = q.p.split('\n').slice(1).join(' ').match(/[^.!?]*_{2,}[^.!?]*[.!?]?/)?.[0]?.trim();
-  const instruction = gap
-    ? `1. Fill in the missing word: “${gap}”\n2. Add more sentences about the same situation. ${angle}\n3. Read your answer again. Check that it makes sense.`
-    : `Write ${form === 'few sentences' ? 'a few sentences' : form === 'email' ? 'an email' : `a ${form}`} about ${context}.\n1. ${angle}\n2. ${formal ? 'Say who you are writing to. Start with a greeting and end politely.' : 'Add a reason or an example.'}\n3. Read your answer again. Check spelling and punctuation.`;
-  const specific = formal ? 'My message is polite and clear.' : organisation ? 'My ideas are in a clear order.' : language ? 'I checked the words and sentence patterns.' : 'My words are clear and easy to understand.';
-  const model = gap ? gap.replace(/_{2,}/, q.a) : q.a;
-  const explanation = formal ? 'This example is polite and says clearly what the writer wants. Check if your message does the same.' : organisation ? 'This example puts the ideas in a clear order. Check the order of your own ideas.' : language ? 'Look at the words and sentence pattern in this example. Check the same part of your answer.' : 'This example is clear and specific. Try to make your own answer easy to understand too.';
-  return { title, instruction, goals, model, explanation, checks: ['I answered the question and added a reason or detail.', specific, 'I checked spelling and punctuation.'] };
+  const instruction = q.writingTask || `Write your own example for this lesson:\n${q.p.split('\n').slice(1).join(' ')}\nKeep the same purpose or grammar pattern and change the details.`;
+  const model = q.writingModel || (gap ? gap.replace(/_{2,}/, q.a) : q.a);
+  return { title, instruction, goals, model, explanation: q.explanation || 'Compare the purpose and structure of your example with the lesson.' };
 }
 
 if (typeof document !== 'undefined') (() => {

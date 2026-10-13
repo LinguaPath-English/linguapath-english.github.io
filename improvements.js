@@ -37,6 +37,7 @@ showSpeakingOptions = message => {
 };
 
 function explainAnswer(question) {
+  if (question.explanation) return `Why: ${question.explanation}`;
   if (question.s === 'Reading' || question.s === 'Listening') {
     const source = question.s === 'Listening' ? question.transcript || question.audio || ''
       : question.p.match(/Passage:\s*"([\s\S]*?)"\s*\n/)?.[1] || '';
@@ -45,7 +46,7 @@ function explainAnswer(question) {
     const sentences = source.replace(/\s+/g, ' ').match(/[^.!?]+[.!?]?/g) || [];
     const ranked = sentences.map(sentence => ({ sentence: sentence.trim(), matches: terms.filter(word => sentence.toLowerCase().includes(word)).length }))
       .sort((a, b) => b.matches - a.matches)[0];
-    if (ranked?.matches) return `Why: ${question.s === 'Listening' ? 'The speaker says' : 'The passage says'} “${ranked.sentence.slice(0, 210)}”.`;
+    if (ranked?.matches) return `Why: ${question.s === 'Listening' ? 'The speaker says' : 'The passage says'} “${ranked.sentence.slice(0, 210)}”`;
     return `Why: This option matches the ${question.s === 'Listening' ? 'speaker’s' : 'passage’s'} key detail or meaning.`;
   }
   if (question.s === 'Writing') {
@@ -193,6 +194,12 @@ function missedTierFor(skill, limit) {
 }
 
 function sessionKey(skill, tier) { return `${skill}:${tier}`; }
+function savedQuestionForSession(question, session) {
+  if (!session.checked) return question;
+  if (session.question?.id === question.id) return session.question;
+  if (question.previousQuestion) return question.previousQuestion;
+  return question;
+}
 function practiceSessions() {
   const sessions = st.practiceSessions && typeof st.practiceSessions === 'object' && !Array.isArray(st.practiceSessions)
     ? st.practiceSessions : (st.practiceSessions = {});
@@ -210,6 +217,7 @@ savePracticeSession = (active = true) => {
     skill: P.skill, tier: P.tier, i: P.i, selected: P.selected,
     checked: P.checked, draft: P.draft || '', revealed: !!P.revealed,
     spoken: !!P.spoken, phase: P.phase || 'base',
+    question: Object.fromEntries(['id','s','t','p','o','a','audio','transcript','explanation','writingTask','writingModel'].map(key => [key, P.queue[P.i]?.[key]])),
     queueIds: P.queue.map(idForQuestion), active, updatedAt: Date.now()
   };
   practiceSessions()[sessionKey(P.skill, P.tier)] = saved;
@@ -242,8 +250,10 @@ openPractice = (skill, resume = null) => {
   P.baseLength = reviewOnly ? 0 : base.length;
   P.phase = phase;
   P.i = Math.min(Math.max(0, Number(session.i) || 0), P.queue.length - 1);
+  P.queue[P.i] = savedQuestionForSession(P.queue[P.i], session);
   P.selected = session.selected || '';
   P.checked = !!session.checked;
+  if (!P.checked && !P.queue[P.i].o.includes(P.selected)) P.selected = '';
   P.draft = session.draft || '';
   P.revealed = !!session.revealed;
   P.spoken = !!session.spoken;
