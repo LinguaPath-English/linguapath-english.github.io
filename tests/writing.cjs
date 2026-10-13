@@ -34,4 +34,77 @@ const html = teacher.writingOverview({writingPortfolio:{'Writing:1:1':{original:
 assert.ok(html.includes('&lt;script&gt;'));
 assert.ok(!html.includes('<script>'));
 assert.ok(html.includes('A clearer response.'));
+// Exercise the optional-writing UI without touching real accounts.
+const nodes = new Map(), listeners = {};
+function node(selector = '') {
+  if (nodes.has(selector)) return nodes.get(selector);
+  const el = { style: {}, value: '', hidden: false, disabled: false, children: [], events: {},
+    classList: { contains: () => true },
+    setAttribute() {}, prepend(...items) { this.children.unshift(...items); },
+    append(...items) { this.children.push(...items); }, after(...items) { this.children.push(...items); },
+    replaceChildren(...items) { this.children = items; },
+    querySelector: selector => node(selector),
+    addEventListener(type, handler, capture) { (this.events[type] ||= []).push({ handler, capture }); },
+    fire(type) { const event = { target: this, stopImmediatePropagation() { this.stopped = true; } };
+      for (const listener of [...(this.events[type] || [])].sort((a,b)=>Number(!!b.capture)-Number(!!a.capture))) {
+        listener.handler(event); if (event.stopped) break;
+      }
+    }
+  };
+  nodes.set(selector, el); return el;
+}
+const state = { correctBySkillTier: { Writing: [0,0,0] }, writingPortfolio: {} };
+const practice = { skill: 'Writing', tier: 1, i: 0, selected: '', checked: false, queue: [
+  { id:'Writing:1:1', s:'Writing', t:1, p:'Formal email\nChoose the polite sentence.', a:'Please help me.' },
+  { id:'Writing:1:2', s:'Writing', t:1, p:'Past simple\nHe ___ yesterday.', a:'arrived' }
+] };
+let saves = 0, elementNumber = 0;
+const ui = vm.createContext({
+  document: { querySelector: node, createElement: () => node(`created-${++elementNumber}`),
+    addEventListener(type, handler) { listeners[type] = handler; } },
+  window: { addEventListener(type, handler) { listeners[type] = handler; } },
+  st: state, P: practice, writingSaveTimer: null,
+  setTimeout: handler => { listeners.timer = handler; return 1; }, clearTimeout: () => { delete listeners.timer; },
+  savePracticeSession: () => saves++, render() {},
+  draw() { node('#writing-response').value = practice.draft || '';
+    node('#check-answer').disabled = !practice.selected;
+    node('#answer-result').textContent = practice.checked ? 'Correct. Why: it is polite.' : '';
+  }
+});
+// Simulate the existing quiz handler, registered before writing.js.
+node('#check-answer').addEventListener('click', () => {
+  if (!practice.checked) practice.checked = true;
+  else { practice.i++; practice.checked = false; practice.selected = ''; }
+  vm.runInContext('draw()', ui);
+});
+vm.runInContext(fs.readFileSync(path.join(root, 'writing.js'), 'utf8'), ui);
+vm.runInContext('draw()', ui);
+const optional = [...nodes.values()].find(el => el.className === 'writing-optional');
+assert.equal(node('#answer-options').style.display, '');
+assert.equal(optional.hidden, true);
+practice.selected = practice.queue[0].a;
+vm.runInContext('draw()', ui);
+assert.equal(node('#check-answer').disabled, false); // no draft required
+node('#check-answer').fire('click');
+assert.equal(optional.hidden, false);
+assert.equal(node('#check-answer').disabled, false); // no review required
+assert.match(node('#answer-result').textContent, /Why:/);
+node('#writing-response').value = 'My optional writing.';
+node('#writing-response').fire('input');
+node('#check-answer').fire('click'); // immediate Next flushes pending draft
+assert.equal(practice.i, 1);
+assert.equal(state.writingPortfolio['Writing:1:1'].revision, 'My optional writing.');
+assert.equal(node('#writing-response').value, ''); // no previous answer leaking
+assert.equal(optional.hidden, true);
+assert.ok(saves > 0);
+practice.i = 0; practice.checked = true; practice.selected = practice.queue[0].a;
+vm.runInContext('draw()', ui);
+assert.equal(node('#writing-response').value, 'My optional writing.');
+node('#writing-response').value = 'My improved optional writing.';
+node('#show-writing-samples').fire('click');
+assert.equal(state.writingPortfolio['Writing:1:1'].original, 'My optional writing.');
+assert.equal(state.writingPortfolio['Writing:1:1'].revision, 'My improved optional writing.');
+assert.ok(state.writingPortfolio['Writing:1:1'].completedAt);
+assert.equal(node('#check-answer').disabled, false);
 console.log('All 300 guided tasks, word counts, completed model sentences, and portfolio merge checks passed.');
+console.log('Quiz-first flow, optional writing, immediate Next saves, and restored originals passed.');
