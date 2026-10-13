@@ -170,7 +170,9 @@ function missedList(skill, tier) {
     const base = Q.filter(q => q.s === skill && q.t === tier);
     if (!base.length) return [];
     const oldMistakes = (st.mistakes || []).filter(m => m.skill === skill && Number(m.tier) === tier);
-    st.missedBySkillTier[key] = [...new Set(oldMistakes.flatMap(m => base.filter(q => q.p === m.prompt).map(q => q.id)))];
+    st.missedBySkillTier[key] = [...new Set(oldMistakes.flatMap(m => base.filter(q =>
+      [q.p, q.previousQuestion?.p, q.previousQuestion?.p?.replace(/(Examiner: “[\s\S]*?”)[\s\S]*$/, '$1')].filter(Boolean).includes(m.prompt)
+    ).map(q => q.id)))];
   }
   return st.missedBySkillTier[key];
 }
