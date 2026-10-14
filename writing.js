@@ -30,6 +30,7 @@ if (typeof document !== 'undefined') (() => {
     st.writingPortfolio ||= {};
     st.writingPortfolio[q.id] = { ...st.writingPortfolio[q.id], ...changes, updatedAt: Date.now() };
     savePracticeSession(true);
+    window.lpRefreshAchievements?.();
   };
   const saveWriting = (explicit = false) => {
     const q = current(), value = input.value;

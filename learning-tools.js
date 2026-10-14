@@ -66,6 +66,7 @@ if (typeof document !== 'undefined' && document.querySelector('#review-dialog'))
     const q = P.queue[P.i];
     if (!q?.id) return;
     const old = reviewMap()[q.id], correct = P.selected === q.a;
+    if (correct && old?.failures) window.lpRecordAchievementFact?.('correction', q.id);
     if (!correct || old) reviewMap()[q.id] = scheduleReview(old, correct, P.selected);
     // The existing answer handler persists this along with the score in one save.
   }, true);
@@ -102,6 +103,7 @@ if (typeof document !== 'undefined' && document.querySelector('#review-dialog'))
     if (owner !== session || !selected) { dialog.close(); return; }
     if (!checked) {
       const q = queue[index];
+      if (selected === q.a) { window.lpRecordAchievementFact?.('recall', q.id); window.lpRecordAchievementFact?.('correction', q.id); }
       reviewMap()[q.id] = scheduleReview(reviewMap()[q.id], selected === q.a, selected, Date.now(), true);
       checked = true; save(); drawReview(); render();
     } else if (index === queue.length - 1) dialog.close();

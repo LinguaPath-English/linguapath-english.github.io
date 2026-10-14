@@ -9,7 +9,7 @@ function progressChange(base, next) {
   for (const key of new Set([...Object.keys(base), ...Object.keys(next)])) {
     if (sameProgress(base[key], next[key])) continue;
     before[key] = base[key]; after[key] = next[key];
-    if (['profile', 'practiceSessions', 'correctBySkillTier', 'missedBySkillTier', 'sessionCompletedAt', 'writingPortfolio', 'learningReview'].includes(key)) {
+    if (['profile', 'practiceSessions', 'correctBySkillTier', 'missedBySkillTier', 'sessionCompletedAt', 'writingPortfolio', 'learningReview', 'achievementFacts', 'earnedAchievements'].includes(key)) {
       before[key] = {}; after[key] = {};
       for (const item of new Set([...Object.keys(base[key] || {}), ...Object.keys(next[key] || {})])) {
         if (sameProgress(base[key]?.[item], next[key]?.[item])) continue;
@@ -32,7 +32,7 @@ function mergeProgress(remote, base, next) {
   const result = cloneProgress(remote);
   const special = new Set(['_savedAt', '_syncReceipts', 'correct', 'correctByTier', 'correctBySkillTier',
     'exercisesCompleted', 'lessons', 'today', 'dayKey', 'profile', 'mistakes', 'missedBySkillTier',
-    'practiceSession', 'practiceSessions', 'sessionCompletedAt', 'quoteUsed', 'writingPortfolio', 'learningReview']);
+    'practiceSession', 'practiceSessions', 'sessionCompletedAt', 'quoteUsed', 'writingPortfolio', 'learningReview', 'achievementFacts', 'earnedAchievements']);
   for (const key of Object.keys(next)) {
     if (!special.has(key) && !sameProgress(next[key], base[key])) result[key] = cloneProgress({ value: next[key] }).value;
   }
@@ -93,6 +93,15 @@ function mergeProgress(remote, base, next) {
       failures: count(other?.failures, base.learningReview?.[id]?.failures, item.failures),
       lastWrongAt: Math.max(other?.lastWrongAt || 0, item.lastWrongAt || 0) };
   }
+  // Evidence and earned badges are permanent within a reset generation.
+  result.achievementFacts = { ...remote.achievementFacts };
+  for (const [id, at] of Object.entries(next.achievementFacts || {})) result.achievementFacts[id] = Math.min(result.achievementFacts[id] || Infinity, at);
+  result.earnedAchievements = { ...remote.earnedAchievements };
+  for (const [id, badge] of Object.entries(next.earnedAchievements || {})) {
+    const other = result.earnedAchievements[id];
+    if (!other || badge.at < other.at) result.earnedAchievements[id] = badge;
+  }
+  if (result.today >= 10 && result.dayKey) result.achievementFacts['goal:' + result.dayKey] ||= Date.now();
   // Completing the daily goal across devices should still ignite today's streak.
   if (result.today >= 10 && result.streakDay !== result.dayKey) {
     const last = Math.max(remote.lastStreakAt || 0, next.lastStreakAt || 0);
