@@ -5,7 +5,7 @@ const vm = require('node:vm');
 
 const read = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
 const element = () => ({
-  textContent: '', innerHTML: '', value: '', hidden: false, disabled: false, listeners: {},
+  textContent: '', innerHTML: '', value: '', hidden: false, disabled: false, dataset: {}, listeners: {},
   addEventListener(name, handler) { this.listeners[name] = handler; },
   click() { return this.listeners.click?.(); },
   focus() {}, showModal() {}, close() { this.listeners.close?.(); }
@@ -13,9 +13,9 @@ const element = () => ({
 
 async function testSync() {
   const status = element(), retry = element(), events = {};
-  let cloudOk = false;
+  let cloudOk = false, throws = false;
   const window = {
-    lpSaveProgress: async () => cloudOk,
+    lpSaveProgress: async () => { if (throws) throw new Error('Connection interrupted'); return cloudOk; },
     lpCloudReady: false,
     __lpCloudUser: null,
     addEventListener(name, handler) { events[name] = handler; }
@@ -29,12 +29,16 @@ async function testSync() {
   events['lp:cloud-ready']({ detail: { updatedAt: new Date().toISOString() } });
   assert.equal(status.textContent, 'Saved to your account');
   assert.equal(await window.lpSaveProgress({}), false);
-  assert.equal(status.textContent, 'Saved on this device · Retry sync');
+  assert.equal(status.textContent, 'Not synced · Retry');
   assert.equal(retry.hidden, false);
   cloudOk = true;
   retry.click();
   assert.equal(await window.lpCloudPending, true);
   assert.equal(status.textContent, 'Saved to your account');
+  throws = true;
+  assert.equal(await window.lpSaveProgress({}), false);
+  assert.equal(status.dataset.state, 'pending');
+  assert.equal(retry.hidden, false);
 }
 
 async function testTeacher() {
@@ -51,6 +55,7 @@ async function testTeacher() {
     fetch, Blob, URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} },
     Intl, Date, setTimeout, location: { reload() {} }
   });
+  vm.runInContext(read('learning-tools.js'), context);
   vm.runInContext(read('teacher.js'), context);
   vm.runInContext('teacherSession = {access_token:"token",expires_at:Date.now()/1000+3600,user:{id:"teacher-a"}}', context);
   assert.equal(await vm.runInContext('loadStudents()', context), true);
