@@ -46,14 +46,15 @@ console.log('Recall scheduling, answer contrasts, teacher insights, cross-device
 
 // Reduced motion can change while the page is open; hidden tabs stop rendering.
 const events = {}, media = { matches: false, addEventListener: (_, cb) => events.motion = cb };
-let requested = 0, cancelled = 0;
+let requested = 0, cancelled = 0, animation;
+const pointerEvents = {}, positions = {}, classes = new Set();
 const canvas = { setAttribute() {}, getContext: () => ({ setTransform() {}, clearRect() {}, beginPath() {}, arc() {}, fill() {} }) };
-const body = { prepend() {}, classList: { contains: () => false, remove() {}, add() {} }, style: { setProperty() {} } };
+const body = { prepend() {}, classList: { contains: name => classes.has(name), remove: name => classes.delete(name), add: name => classes.add(name) }, style: { setProperty: (name, value) => positions[name] = value } };
 const doc = { body, hidden: false, createElement: () => canvas, addEventListener: (name, cb) => events[name] = cb };
-vm.runInNewContext(read('ambient-background.js'), { document: doc, window: { addEventListener() {} },
+vm.runInNewContext(read('ambient-background.js'), { document: doc, window: { addEventListener: (name, cb) => pointerEvents[name] = cb },
   matchMedia: query => query.includes('reduced') ? media : { matches: true },
   innerWidth: 375, innerHeight: 812, devicePixelRatio: 1, performance: { now: () => now },
-  requestAnimationFrame: () => ++requested, cancelAnimationFrame: () => cancelled++,
+  requestAnimationFrame: cb => { animation = cb; return ++requested; }, cancelAnimationFrame: () => cancelled++,
   MutationObserver: class { observe() {} } });
 assert.equal(requested, 1);
 events.motion({ matches: true });
@@ -64,3 +65,18 @@ doc.hidden = true; events.visibilitychange();
 assert.equal(requested, 2);
 assert.ok(cancelled >= 4);
 console.log('Live reduced-motion changes and background-tab animation suspension passed.');
+doc.hidden = false; events.visibilitychange();
+pointerEvents.pointermove({ pointerType: 'mouse', clientX: 100, clientY: 80 }); animation(now + 16);
+assert.equal(parseFloat(positions['--pointer-x']), 100, 'First entry starts at the pointer, not across the screen');
+pointerEvents.pointermove({ pointerType: 'mouse', clientX: 300, clientY: 80 }); animation(now + 32);
+assert.ok(parseFloat(positions['--pointer-x']) > 100 && parseFloat(positions['--pointer-x']) < 300, 'Glow eases rather than jumps');
+animation(now + 2000); assert.equal(classes.has('pointer-active'), false, 'Idle glow fades out');
+const beforeTouch = positions['--pointer-x'];
+pointerEvents.pointermove({ pointerType: 'touch', clientX: 10, clientY: 10 }); animation(now + 2016);
+assert.equal(positions['--pointer-x'], beforeTouch, 'Touch does not activate glow');
+events.motion({ matches: true });
+pointerEvents.pointermove({ pointerType: 'mouse', clientX: 10, clientY: 10 });
+assert.equal(classes.has('pointer-active'), false, 'Reduced motion blocks pointer activation');
+assert.match(read('ambient-background.css'), /pointer-events:none/);
+assert.match(read('ambient-background.css'), /forced-colors:active/);
+console.log('Smoothed pointer glow, idle fade, touch exclusion, and reduced-motion activation checks passed.');
