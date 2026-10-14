@@ -24,7 +24,7 @@
     window.addEventListener('pointerout',event=>{if(!event.relatedTarget){mouse.active=false;document.body.classList.remove('pointer-active')}},{passive:true});
   }
   function animate(time){
-    const ease=1-Math.exp(-Math.min(64,Math.max(0,time-glow.time))/90);glow.time=time;
+    const ease=1-Math.exp(-Math.min(64,Math.max(0,time-glow.time))/120);glow.time=time;
     if(mouse.active){
       glow.x+=(mouse.x-glow.x)*ease;glow.y+=(mouse.y-glow.y)*ease;
       document.body.style.setProperty('--pointer-x',glow.x.toFixed(2)+'px');document.body.style.setProperty('--pointer-y',glow.y.toFixed(2)+'px');

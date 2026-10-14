@@ -1,11 +1,12 @@
 body{position:relative;isolation:isolate;--pointer-x:50vw;--pointer-y:35vh}
 /* Local light layers move behind the interface, never blur or cover its text. */
-body:before,body:after{content:"";position:fixed;left:0;top:0;z-index:-1;pointer-events:none;opacity:0;transform:translate3d(var(--pointer-x),var(--pointer-y),0) translate(-50%,-50%);transition:opacity 1.1s ease}
-body:before{width:clamp(360px,48vw,620px);height:clamp(360px,48vw,620px);border-radius:50%;background:radial-gradient(ellipse at 44% 40%,#ffffff70,transparent 32%),radial-gradient(ellipse at 60% 54%,#b9c7ff26,transparent 54%),radial-gradient(ellipse at center,#61cfa52b,transparent 70%)}
-body:after{width:240px;height:170px;border-radius:50%;background:radial-gradient(ellipse at 40% 35%,#ffffff66,transparent 48%),radial-gradient(ellipse at 65% 65%,#82d4c52e,transparent 65%);filter:blur(18px)}
-body.pointer-active:before,body.pointer-active:after{opacity:1;transition-duration:.4s}
-body.dark:before{background:radial-gradient(ellipse at 44% 40%,#c6f5ee12,transparent 30%),radial-gradient(ellipse at 60% 54%,#9cafff12,transparent 52%),radial-gradient(ellipse at center,#47c99826,transparent 70%)}
-body.dark:after{background:radial-gradient(ellipse at 40% 35%,#d5fff028,transparent 48%),radial-gradient(ellipse at 65% 65%,#9bbaff16,transparent 65%)}
+body:before,body:after{content:"";position:fixed;left:0;top:0;z-index:-1;pointer-events:none;opacity:0;transform:translate3d(var(--pointer-x),var(--pointer-y),0) translate(-50%,-50%);transition:opacity 1.4s cubic-bezier(.2,.65,.3,1)}
+/* Prism: overlapping pastel light, not a hard-edged multicolour cursor. */
+body:before{width:clamp(380px,44vw,560px);height:clamp(380px,44vw,560px);border-radius:50%;filter:blur(28px);background:radial-gradient(ellipse at 30% 40%,#73eee85c,transparent 48%),radial-gradient(ellipse at 65% 30%,#bb9dff55,transparent 46%),radial-gradient(ellipse at 60% 65%,#ffc8bf60,transparent 48%)}
+body:after{width:300px;height:230px;border-radius:50%;background:radial-gradient(ellipse at 40% 35%,#ffffff38,transparent 52%),radial-gradient(ellipse at 65% 65%,#d1bfff20,transparent 65%);filter:blur(26px)}
+body.pointer-active:before,body.pointer-active:after{opacity:1;transition-duration:.6s}
+body.dark:before{background:radial-gradient(ellipse at 30% 40%,#73eee83a,transparent 48%),radial-gradient(ellipse at 65% 30%,#bb9dff38,transparent 46%),radial-gradient(ellipse at 60% 65%,#ffc8bf36,transparent 48%)}
+body.dark:after{background:radial-gradient(ellipse at 40% 35%,#eff8ff14,transparent 52%),radial-gradient(ellipse at 65% 65%,#d1bfff14,transparent 65%)}
 body:is(.dialog-open,.recall-open).pointer-active:before,body:is(.dialog-open,.recall-open).pointer-active:after{opacity:.25}
 .ambient-canvas{position:fixed;inset:0;z-index:-1;width:100%;height:100%;pointer-events:none}
 @media(prefers-reduced-motion:reduce),(hover:none),(pointer:coarse),(forced-colors:active){body:before,body:after{display:none}}
