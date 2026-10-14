@@ -8,6 +8,7 @@ let saving = false;
 function showSync(message, detail = message, canRetry = false) {
   syncLabel.textContent = matchMedia('(max-width: 600px)').matches && message === 'Saved to your account' ? 'Saved' : message;
   syncLabel.title = detail;
+  syncLabel.dataset.state = canRetry ? 'pending' : message === 'Saving…' ? 'saving' : message === 'Saved to your account' ? 'saved' : 'waiting';
   syncRetry.hidden = !canRetry;
   const practiceStatus = document.querySelector('#practice-save-status');
   const practiceRetry = document.querySelector('#practice-sync-retry');
@@ -21,19 +22,23 @@ function showSaved(time = new Date()) {
   showSync('Saved to your account', `Saved to your account at ${when}`);
 }
 
-window.lpSaveProgress = state => {
+window.lpSaveProgress = async state => {
   if (!window.__lpCloudUser) return saveToCloud(state);
   const revision = ++saveRevision;
   saving = true;
   showSync('Saving…');
-  return saveToCloud(state).then(ok => {
+  try {
+    const ok = await saveToCloud(state);
     if (revision === saveRevision) {
       saving = false;
       if (ok) showSaved();
-      else showSync('Saved on this device · Retry sync', 'Keep using this device. Select Retry to save pending progress to your account.', true);
+      else showSync('Not synced · Retry', 'Your progress is saved on this device only. Keep using this device and select Retry before switching devices.', true);
     }
     return ok;
-  });
+  } catch {
+    if (revision === saveRevision) { saving = false; showSync('Not synced · Retry', 'Cloud sync failed. Keep this page open and select Retry before switching devices.', true); }
+    return false;
+  }
 };
 
 syncRetry.addEventListener('click', () => {

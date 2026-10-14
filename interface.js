@@ -68,7 +68,9 @@
     welcome.hidden = !window.__lpCloudUser || !!st.onboardingSeen || (Number(st.exercisesCompleted) || 0) > 0;
     document.body.classList.toggle('dark', !!st.profile.dark);
     const saved = resumeTarget();
-    $('#today [data-action="practice"]').innerHTML = `${saved ? 'Continue practice' : 'Start practicing'} <span aria-hidden="true">→</span>`;
+    $('#today [data-action="practice"]').textContent = saved ? `Continue ${saved.skill} →` : 'Start practicing →';
+    $('#today [data-action="practice"]').setAttribute('aria-label', saved
+      ? `Continue ${saved.skill}, Tier ${saved.tier}, ${saved.phase === 'review' ? 'missed-question review' : `Exercise ${saved.i + 1}`}` : 'Start practicing');
     resumeHint.textContent = saved
       ? `${saved.skill} · Tier ${saved.tier} · ${saved.phase === 'review' ? 'Missed-question review' : `Exercise ${saved.i + 1}`}`
       : 'Ten exercises. One small step forward.';

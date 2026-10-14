@@ -9,7 +9,7 @@ function progressChange(base, next) {
   for (const key of new Set([...Object.keys(base), ...Object.keys(next)])) {
     if (sameProgress(base[key], next[key])) continue;
     before[key] = base[key]; after[key] = next[key];
-    if (['profile', 'practiceSessions', 'correctBySkillTier', 'missedBySkillTier', 'sessionCompletedAt', 'writingPortfolio'].includes(key)) {
+    if (['profile', 'practiceSessions', 'correctBySkillTier', 'missedBySkillTier', 'sessionCompletedAt', 'writingPortfolio', 'learningReview'].includes(key)) {
       before[key] = {}; after[key] = {};
       for (const item of new Set([...Object.keys(base[key] || {}), ...Object.keys(next[key] || {})])) {
         if (sameProgress(base[key]?.[item], next[key]?.[item])) continue;
@@ -32,7 +32,7 @@ function mergeProgress(remote, base, next) {
   const result = cloneProgress(remote);
   const special = new Set(['_savedAt', '_syncReceipts', 'correct', 'correctByTier', 'correctBySkillTier',
     'exercisesCompleted', 'lessons', 'today', 'dayKey', 'profile', 'mistakes', 'missedBySkillTier',
-    'practiceSession', 'practiceSessions', 'sessionCompletedAt', 'quoteUsed', 'writingPortfolio']);
+    'practiceSession', 'practiceSessions', 'sessionCompletedAt', 'quoteUsed', 'writingPortfolio', 'learningReview']);
   for (const key of Object.keys(next)) {
     if (!special.has(key) && !sameProgress(next[key], base[key])) result[key] = cloneProgress({ value: next[key] }).value;
   }
@@ -84,6 +84,14 @@ function mergeProgress(remote, base, next) {
     if (sameProgress(item, base.writingPortfolio?.[id])) continue;
     const other = result.writingPortfolio[id];
     if (!other || (item.updatedAt || 0) >= (other.updatedAt || 0)) result.writingPortfolio[id] = cloneProgress(item);
+  }
+  result.learningReview = cloneProgress(remote.learningReview);
+  for (const [id, item] of Object.entries(next.learningReview || {})) {
+    if (sameProgress(item, base.learningReview?.[id])) continue;
+    const other = result.learningReview[id];
+    result.learningReview[id] = { ...(other && other.updatedAt > item.updatedAt ? other : item),
+      failures: count(other?.failures, base.learningReview?.[id]?.failures, item.failures),
+      lastWrongAt: Math.max(other?.lastWrongAt || 0, item.lastWrongAt || 0) };
   }
   // Completing the daily goal across devices should still ignite today's streak.
   if (result.today >= 10 && result.streakDay !== result.dayKey) {

@@ -6,7 +6,7 @@
   <title>LinguaPath · Teacher progress</title>
   <link rel="icon" type="image/svg+xml" href="linguapath-icon.svg?v=20261006-1" />
   <link rel="stylesheet" href="style.css?v=20261006-1" />
-  <link rel="stylesheet" href="improvements.css?v=20261005-3" />
+  <link rel="stylesheet" href="improvements.css?v=20261013-1" />
   <link rel="stylesheet" href="teacher.css?v=20261003-1" />
   <link rel="stylesheet" href="teacher-upgrades.css?v=20261005-3" />
   <link rel="stylesheet" href="writing.css?v=20261006-3" />
@@ -19,6 +19,8 @@
       <div class="teacher-heading"><div><p class="eyebrow">Teacher dashboard</p><h1>Your students</h1><p class="muted">Only accounts with saved progress appear here.</p></div><button id="teacher-refresh" class="secondary" type="button">Refresh</button></div>
       <div id="teacher-summary" class="teacher-summary"></div>
       <div class="teacher-tools"><label for="teacher-search">Find a student<input id="teacher-search" type="search" placeholder="Name or email" /></label><button id="teacher-export" class="secondary" type="button" disabled>Export all as CSV</button></div>
+      <label class="teacher-attention-filter"><input type="checkbox" id="teacher-attention-only" /> Show students needing attention</label>
+      <p class="muted">Attention flags show 7 days without recorded practice, delayed reviews due, or repeated mistakes. New mistake tracking starts with this release; older attempts may not have full history.</p>
       <p id="teacher-dashboard-message" class="teacher-error" role="status" aria-live="polite"></p>
       <div class="teacher-table-wrap"><table><thead><tr><th scope="col">Student</th><th scope="col">Email</th><th scope="col">Exercises</th><th scope="col">Correct</th><th scope="col">Skills & tiers</th><th scope="col">Missed questions</th><th scope="col">Streak</th><th scope="col">Last activity</th><th scope="col">Account</th></tr></thead><tbody id="teacher-rows"></tbody></table></div>
       <p id="teacher-empty" class="muted" hidden>No student progress has been saved yet.</p><p id="teacher-filter-empty" class="muted" hidden>No students match that search.</p>
@@ -26,6 +28,7 @@
     </section>
   </main>
   <dialog id="teacher-delete-dialog" class="teacher-delete-dialog" aria-labelledby="teacher-delete-title"><h2 id="teacher-delete-title">Delete student account?</h2><p id="teacher-delete-description"></p><p>This permanently deletes the login and all saved practice. It cannot be undone.</p><label for="teacher-delete-confirm">Type the student’s email to confirm<input id="teacher-delete-confirm" type="email" autocomplete="off" /></label><p id="teacher-delete-error" class="teacher-error" role="alert"></p><div class="teacher-dialog-actions"><button id="teacher-delete-cancel" class="secondary" type="button">Cancel</button><button id="teacher-delete-submit" class="teacher-danger" type="button" disabled>Delete account</button></div></dialog>
-  <script src="teacher.js?v=20261006-3"></script>
+  <script src="learning-tools.js?v=20261013-1"></script>
+  <script src="teacher.js?v=20261013-1"></script>
 </body>
 </html>

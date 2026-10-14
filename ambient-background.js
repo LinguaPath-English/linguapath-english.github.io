@@ -2,7 +2,7 @@
   const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
   if(!ctx)return;
   canvas.className='ambient-canvas';canvas.setAttribute('aria-hidden','true');document.body.prepend(canvas);
-  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,mouse={x:0,y:0,active:false,lastMove:0};let dots=[],width=0,height=0,dpr=1;
+  const motion=matchMedia('(prefers-reduced-motion: reduce)'),mouse={x:0,y:0,active:false,lastMove:0};let reduced=motion.matches,dots=[],width=0,height=0,dpr=1,frame=0,last=0;
   function resize(){
     width=innerWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=width*dpr;canvas.height=height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
     const count=Math.min(150,Math.max(55,Math.round(width*height/10000))),cols=Math.ceil(Math.sqrt(count*width/height)),rows=Math.ceil(count/cols),cellW=width/cols,cellH=height/rows;
@@ -19,9 +19,14 @@
     });
   }
   resize();window.addEventListener('resize',resize,{passive:true});
-  if(!reduced&&matchMedia('(pointer:fine)').matches){
-    window.addEventListener('pointermove',event=>{if(event.pointerType==='touch')return;mouse.x=event.clientX;mouse.y=event.clientY;mouse.lastMove=performance.now();mouse.active=true;document.body.style.setProperty('--pointer-x',mouse.x+'px');document.body.style.setProperty('--pointer-y',mouse.y+'px');document.body.classList.add('pointer-active')},{passive:true});
+  if(matchMedia('(pointer:fine)').matches){
+    window.addEventListener('pointermove',event=>{if(reduced||event.pointerType==='touch')return;mouse.x=event.clientX;mouse.y=event.clientY;mouse.lastMove=performance.now();mouse.active=true;document.body.style.setProperty('--pointer-x',mouse.x+'px');document.body.style.setProperty('--pointer-y',mouse.y+'px');document.body.classList.add('pointer-active')},{passive:true});
     window.addEventListener('pointerout',event=>{if(!event.relatedTarget){mouse.active=false;document.body.classList.remove('pointer-active')}},{passive:true});
   }
-  if(!reduced){let last=0;function animate(time){if(time-last>32){draw();last=time}requestAnimationFrame(animate)}requestAnimationFrame(animate)}
+  function animate(time){if(time-last>32){draw();last=time}frame=requestAnimationFrame(animate)}
+  function updateAnimation(){cancelAnimationFrame(frame);if(!reduced&&!document.hidden)frame=requestAnimationFrame(animate);else draw()}
+  motion.addEventListener('change',event=>{reduced=event.matches;mouse.active=false;document.body.classList.remove('pointer-active');dots.forEach(dot=>{dot.x=dot.homeX;dot.y=dot.homeY;dot.vx=dot.vy=0});updateAnimation()});
+  document.addEventListener('visibilitychange',updateAnimation);
+  new MutationObserver(()=>{if(reduced)draw()}).observe(document.body,{attributes:true,attributeFilter:['class']});
+  updateAnimation();
 })();
