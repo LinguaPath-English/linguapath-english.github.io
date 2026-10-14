@@ -91,7 +91,8 @@ function testFeedback() {
   const privacy = read('privacy.html');
   assert.match(privacy, /Privacy &amp; Help|Privacy & Help/);
   for (const section of ['data', 'recordings', 'deletion', 'help']) assert.ok(privacy.includes(`id="${section}"`));
-  assert.match(privacy, /mailto:Estebanthekillerx2@gmail\.com/);
+  assert.doesNotMatch(privacy, /mailto:|Estebanthekiller|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  assert.match(privacy, /Contact your teacher/);
   assert.doesNotMatch(privacy, /<script|<form|fonts\.googleapis\.com/);
   assert.match(privacy, /does not upload your recording/);
   assert.match(privacy, /cached copies on devices/);
