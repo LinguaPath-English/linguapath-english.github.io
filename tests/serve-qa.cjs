@@ -21,12 +21,28 @@ teacherSession={user:{id:'qa-teacher'},access_token:'qa',expires_at:Date.now()/1
 studentRows=[{user_id:'qa-student',email:'student@example.invalid',updated_at:new Date().toISOString(),state:{profile:{name:'QA Student'},lastActivityAt:Date.now()-9*86400000,exercisesCompleted:20,correct:12,correctBySkillTier:{Writing:[8,0,0],Reading:[4,0,0],Listening:[0,0,0],Speaking:[0,0,0]},learningReview:{'Writing:1:1':{failures:3,dueAt:Date.now()-1,needsCorrection:false}}}}];
 fetch('questions.json').then(r=>r.json()).then(rows=>{teacherQuestions=rows;document.querySelector('#teacher-auth').hidden=true;document.querySelector('#teacher-dashboard').hidden=false;renderStudents()});
 </script>`;
+const achievementSeed = `<script>
+if(!localStorage.getItem('achievement-qa-seeded')){
+ const all=JSON.parse(localStorage.getItem('linguapath-users')),s=all['qa-student'].state,at=Date.now()-86400000;
+ const day=n=>{const d=new Date();d.setDate(d.getDate()+n);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
+ s.dayKey=day(0);s.today=9;s.exercisesCompleted=349;s.correctByTier=[99,0,0];s.correctBySkillTier={Writing:[8,0,0],Reading:[99,0,0],Listening:[1,0,0],Speaking:[0,0,0]};s.achievementFacts={};
+ for(let i=0;i<4;i++)for(const type of ['correction','voice','revision'])s.achievementFacts[type+':seed-'+i]=at;
+ for(let i=0;i<9;i++)s.achievementFacts['recall:seed-'+i]=at;
+ for(const n of [-6,-4,-2,-1])s.achievementFacts['goal:'+day(n)]=at;
+ s.writingPortfolio={'Writing:1:1':{original:'I need more time for my assignment.',revision:'I need more time for my assignment.',completedAt:at,updatedAt:at}};
+ s.learningReview={'Speaking:1:1':{failures:1,needsCorrection:true,lastWrongAt:at},'Listening:1:1':{failures:1,needsCorrection:false,dueAt:at,intervalDays:3,updatedAt:at}};
+ s.missedBySkillTier={'Speaking:1':['Speaking:1:1']};
+ s.practiceSessions={'Writing:1':{skill:'Writing',tier:1,i:0,checked:false,active:false,updatedAt:at},'Reading:1':{skill:'Reading',tier:1,i:99,checked:false,active:false,updatedAt:at}};
+ localStorage.setItem('linguapath-users',JSON.stringify(all));localStorage.setItem('achievement-qa-seeded','yes');
+}
+</script>`;
 http.createServer((request, response) => {
   const url = new URL(request.url, 'http://127.0.0.1');
-  if (url.pathname === '/qa' || url.pathname === '/qa-teacher') {
+  if (url.pathname === '/qa' || url.pathname === '/qa-teacher' || url.pathname === '/qa-achievements') {
     const teacher = url.pathname === '/qa-teacher';
     let html = fs.readFileSync(path.join(root, teacher ? 'teacher.html' : 'index.html'), 'utf8');
     html = html.replace(/(<body[^>]*>)/, '$1' + banner + networkGuard + (teacher ? '' : bootstrap));
+    if (url.pathname === '/qa-achievements') html = html.replace('<script src="script.js', achievementSeed + '<script src="script.js');
     html = html.replace(/<script src="supabase-auth.js[^>]*><\/script>/, '');
     if (teacher) html = html.replace('</body>', teacherSeed + '</body>');
     response.setHeader('Content-Type', 'text/html'); response.end(html); return;

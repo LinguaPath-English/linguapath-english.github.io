@@ -51,6 +51,10 @@ async function main() {
     return context.window.lpSaveProgress(context.st);
   };
   const a = device(), b = device();
+  a.st.achievementFacts = { 'correction:Writing:1:1': 1 };
+  b.st.achievementFacts = { 'voice:Speaking:1:1': 2 };
+  a.st.earnedAchievements = { comeback: { at: 1, evidence: 'Corrected five questions' } };
+  b.st.earnedAchievements = { voice: { at: 2, evidence: 'Completed five self-checks' } };
   assert.deepEqual(await Promise.all([answer(a, 'Writing', 4), answer(b, 'Reading', 2)]), [true, true]);
   assert.ok(conflicts > 0, 'Must exercise the conflicting-write retry');
   assert.equal(row.state.exercisesCompleted, 2);
@@ -58,6 +62,8 @@ async function main() {
   assert.equal(row.state.correctBySkillTier.Reading[0], 1);
   assert.equal(row.state.practiceSessions['Writing:1'].i, 4);
   assert.equal(row.state.practiceSessions['Reading:1'].i, 2);
+  assert.equal(Object.keys(row.state.achievementFacts).length, 2, 'Concurrent badge evidence survives both device saves');
+  assert.equal(Object.keys(row.state.earnedAchievements).length, 2, 'Concurrent earned badges are unioned');
   loseResponse = true;
   assert.equal(await answer(a, 'Writing', 5), false);
   const committed = row.state.exercisesCompleted;
@@ -75,6 +81,7 @@ async function main() {
   assert.equal(row.state.exercisesCompleted, 0);
   assert.equal(await answer(b, 'Reading', 4), true);
   assert.equal(row.state.exercisesCompleted, 0, 'Stale device cannot undo an account reset');
+  assert.equal(Object.keys(row.state.earnedAchievements || {}).length, 0, 'Stale device cannot revive reset badges');
   const cloud = vm.runInContext('restoreSavedProgress', a)({ savedAt: Date.now() + 1000, state: initial }, row);
   assert.equal(cloud.restoreLocal, false, 'Legacy local data cannot undo a reset');
   console.log('Concurrent saves, per-skill cursors, lost-response retry, offline reload, and reset protection passed.');
