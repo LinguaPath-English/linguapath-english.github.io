@@ -9,7 +9,7 @@ function progressChange(base, next) {
   for (const key of new Set([...Object.keys(base), ...Object.keys(next)])) {
     if (sameProgress(base[key], next[key])) continue;
     before[key] = base[key]; after[key] = next[key];
-    if (['profile', 'practiceSessions', 'correctBySkillTier', 'missedBySkillTier', 'sessionCompletedAt', 'writingPortfolio', 'learningReview', 'achievementFacts', 'earnedAchievements'].includes(key)) {
+    if (['profile', 'practiceSessions', 'correctBySkillTier', 'missedBySkillTier', 'sessionCompletedAt', 'writingPortfolio', 'learningReview', 'achievementFacts', 'earnedAchievements', 'practiceActivity'].includes(key)) {
       before[key] = {}; after[key] = {};
       for (const item of new Set([...Object.keys(base[key] || {}), ...Object.keys(next[key] || {})])) {
         if (sameProgress(base[key]?.[item], next[key]?.[item])) continue;
@@ -32,7 +32,7 @@ function mergeProgress(remote, base, next) {
   const result = cloneProgress(remote);
   const special = new Set(['_savedAt', '_syncReceipts', 'correct', 'correctByTier', 'correctBySkillTier',
     'exercisesCompleted', 'lessons', 'today', 'dayKey', 'profile', 'mistakes', 'missedBySkillTier',
-    'practiceSession', 'practiceSessions', 'sessionCompletedAt', 'quoteUsed', 'writingPortfolio', 'learningReview', 'achievementFacts', 'earnedAchievements']);
+    'practiceSession', 'practiceSessions', 'sessionCompletedAt', 'quoteUsed', 'writingPortfolio', 'learningReview', 'achievementFacts', 'earnedAchievements', 'practiceActivity', 'practiceTrackingSince']);
   for (const key of Object.keys(next)) {
     if (!special.has(key) && !sameProgress(next[key], base[key])) result[key] = cloneProgress({ value: next[key] }).value;
   }
@@ -79,6 +79,9 @@ function mergeProgress(remote, base, next) {
   const latest = Object.values(result.practiceSessions).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
   result.practiceSession = latest || null;
   result.lastActivityAt = Math.max(remote.lastActivityAt || 0, next.lastActivityAt || 0);
+  result.practiceActivity = { ...remote.practiceActivity, ...next.practiceActivity };
+  const trackingStarts=[remote.practiceTrackingSince,next.practiceTrackingSince].filter(n=>Number.isFinite(n)&&n>0);
+  if(trackingStarts.length)result.practiceTrackingSince=Math.min(...trackingStarts);
   result.writingPortfolio = cloneProgress(remote.writingPortfolio);
   for (const [id, item] of Object.entries(next.writingPortfolio || {})) {
     if (sameProgress(item, base.writingPortfolio?.[id])) continue;

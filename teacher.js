@@ -8,11 +8,12 @@ let teacherSession = null;
 let studentRows = [];
 let teacherQuestions = [];
 let selectedStudent = null;
+let studentDetailId=null,teacherAssignments=[],rosterComplete=false;
 const $ = selector => document.querySelector(selector);
 const showError = message => { $('#teacher-error').textContent = message; };
 const showMessage = message => { $('#teacher-dashboard-message').textContent = message; };
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-const formatDate = value => value ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '—';
+const formatDate = value => value && Number.isFinite(+new Date(value)) ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '—';
 const skillTotal = (state, skill) => (state.correctBySkillTier?.[skill] || []).reduce((sum, count) => sum + (Number(count) || 0), 0);
 const missedQuestions = state => Object.values(state.missedBySkillTier || {}).flat();
 function skillOverview(state) {
@@ -23,7 +24,7 @@ function skillOverview(state) {
 }
 function reviewOverview(state) {
   const ids = [...new Set(missedQuestions(state))];
-  if (!ids.length) return '<span class="muted">Up to date</span>';
+  if (!ids.length) return '<span class="muted">No pending tier retries</span>';
   return `<details class="teacher-review"><summary>${ids.length} to review</summary><ul>${ids.map(id => {
     const question = teacherQuestions.find(q => `${q.skill}:${q.tier}:${q.number}` === id);
     return `<li>${escapeHtml(question ? `${question.skill} · Tier ${question.tier} · Question ${question.number}: ${question.prompt}` : id)}</li>`;
@@ -38,7 +39,7 @@ function writingOverview(state) {
 
 function attentionOverview(state) {
   const info = studentInsights(state);
-  const notes = [info.inactive ? 'No recorded exercise in the last 7 days' : '',
+  const notes = [info.inactive ? state.lastActivityAt ? 'No recorded exercise in the last 7 days' : 'No exercise activity date recorded' : '',
     info.focus ? `Least-practised skill(s): ${info.focus} (completion, not proficiency)` : '',
     info.due ? `${info.due} delayed review(s) due` : ''].filter(Boolean);
   const repeated = info.recurring.map(([id, item]) => {
@@ -71,31 +72,70 @@ function renderStudents() {
   const visible = studentRows.filter(row => {
     const info = studentInsights(row.state || {});
     return `${row.state?.profile?.name || ''} ${row.email || ''}`.toLowerCase().includes(search) &&
-      (!$('#teacher-attention-only')?.checked || info.inactive || info.due || info.recurring.length);
+      (!$('#teacher-attention-only')?.checked || !row.state?.exercisesCompleted || info.inactive || info.due || info.recurring.length);
   });
   $('#teacher-rows').innerHTML = visible.map(row => {
     const state = row.state || {};
-    const action = row.user_id === teacherSession.user?.id ? '—' : `<button class="teacher-delete-button" type="button" data-delete-user="${escapeHtml(row.user_id)}">Delete</button>`;
-    const activity = state.lastActivityAt ? formatDate(state.lastActivityAt) : 'No exercise activity recorded';
-    const streak = state.lastStreakAt && Date.now() - state.lastStreakAt >= reviewDay ? 0 : Number(state.streak) || 0;
-    return `<tr><td><strong>${escapeHtml(state.profile?.name || 'Learner')}</strong></td><td>${escapeHtml(row.email || '')}</td><td>${Number(state.exercisesCompleted) || 0}</td><td>${Number(state.correct) || 0}</td><td>${skillOverview(state)}${writingOverview(state)}</td><td>${reviewOverview(state)}${attentionOverview(state)}</td><td>${streak} days</td><td>${escapeHtml(activity)}<small class="teacher-skills">Saved ${escapeHtml(formatDate(row.updated_at))}</small></td><td>${action}</td></tr>`;
+    const week=weeklyPractice(state);
+    return `<tr><td><button class="teacher-student-button" type="button" data-open-student="${escapeHtml(row.user_id)}">${escapeHtml(state.profile?.name || row.email?.split('@')[0] || 'Learner')}</button><small class="teacher-skills">${escapeHtml(row.email || '')}</small></td><td>${studentStatus(row)}</td><td>${state.practiceTrackingSince?`${week.current} recorded exercises · ${week.days} practice days`:'History not yet recorded'}</td><td>${Number(state.exercisesCompleted)||0}</td><td>${row.updated_at?escapeHtml(formatDate(row.updated_at)):'No progress received'}</td></tr>`;
   }).join('');
   $('#teacher-empty').hidden = studentRows.length > 0;
   $('#teacher-filter-empty').hidden = !studentRows.length || !!visible.length;
   $('#teacher-export').disabled = !studentRows.length;
   const recent = studentRows.filter(row => row.state?.lastActivityAt && Date.now() - row.state.lastActivityAt < 7 * reviewDay).length;
-  $('#teacher-summary').innerHTML = `<div class="teacher-stat"><p class="eyebrow">Students with progress</p><strong>${studentRows.length}</strong></div><div class="teacher-stat"><p class="eyebrow">Practised this week</p><strong>${recent}</strong></div><div class="teacher-stat"><p class="eyebrow">Exercises answered</p><strong>${studentRows.reduce((sum, row) => sum + (Number(row.state?.exercisesCompleted) || 0), 0)}</strong></div><div class="teacher-stat"><p class="eyebrow">Correct answers</p><strong>${studentRows.reduce((sum, row) => sum + (Number(row.state?.correct) || 0), 0)}</strong></div>`;
+  const notStarted=studentRows.filter(row=>!row.state?.exercisesCompleted).length;
+  const attention=studentRows.filter(row=>{const i=studentInsights(row.state||{});return !row.state?.exercisesCompleted||i.inactive||i.due||i.recurring.length}).length;
+  $('#teacher-summary').innerHTML = [['Enrolled students',studentRows.length],['Not started',notStarted],['Needs attention',attention],['Active in last 7 days',recent]].map(([label,n])=>`<div class="teacher-stat"><p class="eyebrow">${label}</p><strong>${n}</strong></div>`).join('');
+  renderStudentDetail();renderAssignments();
+}
+
+function studentStatus(row){
+  const state=row.state||{},info=studentInsights(state),labels=[];
+  if(row.email_confirmed_at===null)labels.push('Email not confirmed');
+  if(!state.exercisesCompleted)labels.push('Not started');
+  else if(info.inactive)labels.push(state.lastActivityAt?'Inactive 7+ days':'Activity date unavailable');
+  if(info.due)labels.push(`${info.due} review${info.due===1?'':'s'} due`);
+  if(info.recurring.length)labels.push(`${info.recurring.length} recurring difficult${info.recurring.length===1?'y':'ies'}`);
+  return `<div class="teacher-badges">${(labels.length?labels:['Practising']).map(label=>`<span class="teacher-badge ${labels.length?'attention':''}">${escapeHtml(label)}</span>`).join('')}</div>`;
+}
+function renderStudentDetail(){
+  const panel=$('#teacher-student-detail');if(!panel)return;
+  const row=studentRows.find(r=>r.user_id===studentDetailId);panel.hidden=!row;if(!row){panel.innerHTML='';return}
+  const state=row.state||{},week=weeklyPractice(state);
+  const trend=week.complete?`${week.current-week.previous>=0?'+':''}${week.current-week.previous} exercises versus the previous 7 days.`:'A full 14 days of recorded history is needed for a fair week-to-week comparison.';
+  const action=row.user_id===teacherSession?.user?.id?'':`<details class="teacher-account-settings"><summary>Account settings</summary><p>Permanent removal deletes this login and saved progress. Export anything you need first.</p><button class="teacher-delete-button" type="button" data-delete-user="${escapeHtml(row.user_id)}">Delete student account</button></details>`;
+  panel.innerHTML=`<div class="teacher-detail-header"><div><p class="eyebrow">Student details</p><h2 id="teacher-detail-title" tabindex="-1">${escapeHtml(state.profile?.name||row.email?.split('@')[0]||'Learner')}</h2><p>${escapeHtml(row.email||'')}</p>${studentStatus(row)}</div><button class="secondary" type="button" data-close-student>Close details</button></div><p class="teacher-data-note">Enrolled: ${escapeHtml(formatDate(row.created_at))} · Last exercise: ${escapeHtml(formatDate(state.lastActivityAt))}<br>Last progress received: ${escapeHtml(formatDate(row.updated_at))}. This is not an online/offline indicator.</p><div class="teacher-detail-grid"><section><h3>Last 7 days</h3><p>${week.current} recorded exercises · ${week.correct} correct · ${week.days} practice days</p><p class="teacher-data-note">${trend} Tracking started ${escapeHtml(formatDate(state.practiceTrackingSince))}. Older activity is not reconstructed.</p><h3>Lifetime progress</h3><p>${Number(state.exercisesCompleted)||0} exercises answered. Tier scores below count correct quiz answers, not an assessed proficiency level.</p>${skillOverview(state)}</section><section><h3>Support and review</h3>${reviewOverview(state)}${attentionOverview(state)}<h3>Class assignments</h3>${teacherAssignments.filter(a=>!a.archived).map(a=>{const p=assignmentProgress(a,state);return `<p>${escapeHtml(a.title)}: ${p.count}/${p.target} · ${p.complete?(p.onTime?'Completed':'Completed late'):p.overdue?'Past due':'In progress'}</p>`}).join('')||'<p>No active assignments.</p>'}</section></div><section><h3>Saved writing</h3>${writingOverview(state)||'<p>No writing responses saved.</p>'}</section>${action}`;
+}
+
+async function loadAssignments(){
+  const token=await teacherToken(),response=await fetch(TEACHER_URL+'/rest/v1/class_assignments?select=id,title,skill,target,created_at,due_at,archived&order=created_at.desc',{headers:{apikey:TEACHER_KEY,Authorization:`Bearer ${token}`}});
+  if(!response.ok)throw Error('Assignments unavailable. Check classroom migration or select Refresh.');
+  teacherAssignments=await response.json();
+}
+function renderAssignments(){
+  const list=$('#teacher-assignment-list');if(!list)return;
+  const active=teacherAssignments.filter(a=>!a.archived);
+  list.innerHTML=active.length?active.map(a=>{
+    const results=studentRows.map(row=>({row,p:assignmentProgress(a,row.state||{})}));
+    const done=results.filter(x=>x.p.complete).length;
+    return `<article class="teacher-assignment"><h3>${escapeHtml(a.title)}</h3><p>${escapeHtml(a.skill)} · ${a.target} answered exercises · Due ${escapeHtml(formatDate(a.due_at))}</p><p>${done}/${studentRows.length} students completed · ${results.filter(x=>x.p.overdue).length} past due</p><details><summary>Student completion</summary><ul>${results.map(({row,p})=>`<li>${escapeHtml(row.state?.profile?.name||row.email||'Learner')}: ${p.count}/${p.target} · ${p.complete?(p.onTime?'Completed':'Completed late'):p.overdue?'Past due':'In progress'}</li>`).join('')}</ul></details><button type="button" class="text-button" data-archive-assignment="${escapeHtml(a.id)}">Archive assignment</button></article>`;
+  }).join(''):'<p>No active assignments. Archived assignments remain stored.</p>';
 }
 
 async function loadStudents() {
   showMessage('');
   try {
-    const response = await teacherRpc('teacher_progress');
+    let response = await teacherRpc('teacher_roster');
+    rosterComplete=response.ok;
+    if(response.status===404)response=await teacherRpc('teacher_progress');
     if (!response.ok) {
       showMessage(response.status === 404 ? 'Teacher access is not set up yet. Run the teacher setup SQL in Supabase.' : response.status === 401 || response.status === 403 ? 'This account is not listed as a teacher.' : 'Could not load student progress. Try Refresh.');
       return false;
     }
     studentRows = await response.json();
+    if($('#teacher-roster-note'))$('#teacher-roster-note').textContent=rosterComplete?'All student enrollments, including accounts with no saved practice.':'Limited view: only accounts with progress. Apply classroom.sql for all enrollments.';
+    if($('#teacher-refreshed'))$('#teacher-refreshed').textContent='Report refreshed '+formatDate(Date.now());
+    try{await loadAssignments();if($('#assignment-message'))$('#assignment-message').textContent=''}catch(error){teacherAssignments=[];if($('#assignment-message'))$('#assignment-message').textContent=error.message}
     if (!teacherQuestions.length) {
       try {
         const questions = await fetch('questions.json');
@@ -116,12 +156,12 @@ const csvCell = value => {
   return `"${text.replaceAll('"', '""')}"`;
 };
 function exportStudents() {
-  const headers = ['Name', 'Email', 'Exercises', 'Correct', 'Listening correct', 'Reading correct', 'Writing correct', 'Speaking correct', 'Pending review', 'Streak days', 'Last exercise activity', 'Last saved', 'Least practised (completion only)', 'Inactive 7 days', 'Delayed reviews due', 'Repeated mistakes'];
+  const headers = ['Name', 'Email', 'Exercises', 'Correct', 'Listening correct', 'Reading correct', 'Writing correct', 'Speaking correct', 'Pending review', 'Streak days', 'Last exercise activity', 'Last progress received', 'Least practised (completion only)', 'Inactive 7 days', 'Delayed reviews due', 'Repeated mistakes','Enrolled','Recorded exercises last 7 days','Recorded practice days last 7 days','History tracking started'];
   const lines = studentRows.map(row => {
     const state = row.state || {};
     const info = studentInsights(state);
     return [state.profile?.name || 'Learner', row.email || '', Number(state.exercisesCompleted) || 0, Number(state.correct) || 0,
-      ...['Listening', 'Reading', 'Writing', 'Speaking'].map(skill => skillTotal(state, skill)), missedQuestions(state).length, state.lastStreakAt && Date.now() - state.lastStreakAt >= reviewDay ? 0 : Number(state.streak) || 0, state.lastActivityAt ? new Date(state.lastActivityAt).toISOString() : '', row.updated_at || '', info.focus, info.inactive ? 'Yes' : 'No', info.due, info.recurring.map(([id, item]) => `${id}: ${item.failures}`).join('; ')];
+      ...['Listening', 'Reading', 'Writing', 'Speaking'].map(skill => skillTotal(state, skill)), missedQuestions(state).length, state.lastStreakAt && Date.now() - state.lastStreakAt >= reviewDay ? 0 : Number(state.streak) || 0, state.lastActivityAt ? new Date(state.lastActivityAt).toISOString() : '', row.updated_at || '', info.focus, info.inactive ? 'Yes' : 'No', info.due, info.recurring.map(([id, item]) => `${id}: ${item.failures}`).join('; '),row.created_at||'',weeklyPractice(state).current,weeklyPractice(state).days,state.practiceTrackingSince?new Date(state.practiceTrackingSince).toISOString():''];
   });
   const csv = [headers, ...lines].map(row => row.map(csvCell).join(',')).join('\r\n');
   const url = URL.createObjectURL(new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' }));
@@ -152,7 +192,7 @@ $('#teacher-attention-only')?.addEventListener('change', renderStudents);
 $('#teacher-export').addEventListener('click', exportStudents);
 
 const deleteDialog = $('#teacher-delete-dialog');
-$('#teacher-rows').addEventListener('click', event => {
+function openDelete(event) {
   const button = event.target.closest('[data-delete-user]');
   if (!button) return;
   selectedStudent = studentRows.find(row => row.user_id === button.dataset.deleteUser);
@@ -163,6 +203,30 @@ $('#teacher-rows').addEventListener('click', event => {
   $('#teacher-delete-submit').disabled = true;
   deleteDialog.showModal();
   $('#teacher-delete-confirm').focus();
+}
+$('#teacher-student-detail')?.addEventListener('click',event=>{
+  if(event.target.closest('[data-close-student]')){const id=studentDetailId;studentDetailId=null;renderStudentDetail();document.querySelector(`[data-open-student="${CSS.escape(id)}"]`)?.focus();return}
+  openDelete(event);
+});
+$('#teacher-rows').addEventListener('click',event=>{
+  const button=event.target.closest('[data-open-student]');if(!button)return;
+  studentDetailId=button.dataset.openStudent;renderStudentDetail();$('#teacher-detail-title')?.focus();
+});
+$('#teacher-assignment-form')?.addEventListener('submit',async event=>{
+  event.preventDefault();const button=$('#assignment-create');button.disabled=true;
+  try{
+    const due=new Date($('#assignment-due').value+'T23:59:59');
+    if(!Number.isFinite(+due)||+due<=Date.now())throw Error('Choose a future due date.');
+    const response=await teacherRpc('teacher_create_assignment',{assignment_title:$('#assignment-title').value.trim(),assignment_skill:$('#assignment-skill').value,assignment_target:Number($('#assignment-target').value),assignment_due:due.toISOString()});
+    if(!response.ok)throw Error('Could not create the assignment. Check the fields and retry.');
+    $('#teacher-assignment-form').reset();await loadAssignments();renderAssignments();renderStudentDetail();$('#assignment-message').textContent='Assignment created for the class.';
+  }catch(error){$('#assignment-message').textContent=error.message}finally{button.disabled=false}
+});
+$('#teacher-assignment-list')?.addEventListener('click',async event=>{
+  const button=event.target.closest('[data-archive-assignment]');if(!button)return;
+  if(!confirm('Archive this assignment? It will be hidden from students, but its record is retained.'))return;
+  button.disabled=true;
+  try{const response=await teacherRpc('teacher_archive_assignment',{assignment_id:button.dataset.archiveAssignment});if(!response.ok)throw Error('Could not archive the assignment.');await loadAssignments();renderAssignments();renderStudentDetail();$('#assignment-message').textContent='Assignment archived.'}catch(error){$('#assignment-message').textContent=error.message;button.disabled=false}
 });
 $('#teacher-delete-confirm').addEventListener('input', event => {
   $('#teacher-delete-submit').disabled = event.target.value.trim().toLowerCase() !== selectedStudent?.email?.toLowerCase();
