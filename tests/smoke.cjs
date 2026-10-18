@@ -42,7 +42,7 @@ async function testSync() {
 }
 
 async function testTeacher() {
-  const selectors = ['#teacher-error', '#teacher-dashboard-message', '#teacher-search', '#teacher-rows', '#teacher-empty', '#teacher-filter-empty', '#teacher-export', '#teacher-summary', '#teacher-login', '#teacher-email', '#teacher-password', '#teacher-auth', '#teacher-dashboard', '#teacher-refresh', '#teacher-delete-dialog', '#teacher-delete-description', '#teacher-delete-confirm', '#teacher-delete-error', '#teacher-delete-submit', '#teacher-delete-cancel', '#teacher-logout'];
+  const selectors = ['#teacher-error', '#teacher-dashboard-message', '#teacher-search', '#teacher-rows', '#teacher-empty', '#teacher-filter-empty', '#teacher-export', '#teacher-summary', '#teacher-login', '#teacher-email', '#teacher-password', '#teacher-auth', '#teacher-dashboard', '#teacher-refresh', '#teacher-delete-dialog', '#teacher-delete-description', '#teacher-delete-confirm', '#teacher-delete-error', '#teacher-delete-submit', '#teacher-delete-cancel', '#teacher-logout','#teacher-student-detail','#teacher-detail-title'];
   const elements = Object.fromEntries(selectors.map(selector => [selector, element()]));
   const student = { user_id: 'student-a', email: 'student@example.com', updated_at: new Date().toISOString(), state: { profile: { name: '=HYPERLINK("bad")' }, exercisesCompleted: 12, correct: 9, streak: 1, correctBySkillTier: { Writing: [4, 0, 0] } } };
   let deleted = false;
@@ -56,14 +56,18 @@ async function testTeacher() {
     Intl, Date, setTimeout, location: { reload() {} }
   });
   vm.runInContext(read('learning-tools.js'), context);
+  vm.runInContext(read('classroom.js'),context);
   vm.runInContext(read('teacher.js'), context);
   vm.runInContext('teacherSession = {access_token:"token",expires_at:Date.now()/1000+3600,user:{id:"teacher-a"}}', context);
   assert.equal(await vm.runInContext('loadStudents()', context), true);
-  assert.match(elements['#teacher-rows'].innerHTML, /Writing: 4/);
-  assert.match(elements['#teacher-rows'].innerHTML, /Delete/);
+  assert.match(elements['#teacher-rows'].innerHTML, /data-open-student/);
+  assert.doesNotMatch(elements['#teacher-rows'].innerHTML, /data-delete-user/);
+  vm.runInContext('studentDetailId="student-a";renderStudentDetail()',context);
+  assert.match(elements['#teacher-student-detail'].innerHTML,/Writing: 4/);
+  assert.match(elements['#teacher-student-detail'].innerHTML,/Delete student account/);
   assert.doesNotMatch(elements['#teacher-rows'].innerHTML, /<script/);
   assert.equal(vm.runInContext('csvCell("=SUM(1,2)")', context), '"\'=SUM(1,2)"');
-  elements['#teacher-rows'].listeners.click({ target: { closest: () => ({ dataset: { deleteUser: 'student-a' } }) } });
+  vm.runInContext('openDelete',context)({ target: { closest: () => ({ dataset: { deleteUser: 'student-a' } }) } });
   elements['#teacher-delete-confirm'].value = 'wrong@example.com';
   elements['#teacher-delete-confirm'].listeners.input({ target: elements['#teacher-delete-confirm'] });
   assert.equal(elements['#teacher-delete-submit'].disabled, true);
