@@ -1,0 +1,9 @@
+/* Replace the wide background glow; particle behaviour remains unchanged. */
+body:before,body:after{display:none}
+.glass-cursor{position:fixed;left:0;top:0;width:16px;height:21.33px;z-index:2147483647;pointer-events:none;opacity:0;transform:translate3d(var(--cursor-x,-100px),var(--cursor-y,-100px),0);--rim-a:#fff;--rim-b:#718590;--glass-top:#ffffffc9;--glass-bottom:#c7d8df66;filter:drop-shadow(0 1px 1px #20323c50)}
+body.dark .glass-cursor{--rim-b:#c4d6e5;--glass-top:#ffffff80;--glass-bottom:#b5d2e524;filter:drop-shadow(0 1px 1px #00000045)}
+.glass-cursor svg{display:block;width:100%;height:100%;overflow:visible}
+.glass-cursor .edge-light{opacity:.85;stroke-width:2.6;stroke:#6c9aab;filter:url(#lp-cursor-bloom) drop-shadow(0 0 2px #759dbb70)}
+body.dark .glass-cursor .edge-light{stroke:#d0edf4;filter:url(#lp-cursor-bloom) drop-shadow(0 0 3px #a9d8ee90)}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) and (forced-colors:none){body.glass-cursor-active,body.glass-cursor-active *{cursor:none!important}body.glass-cursor-active .glass-cursor{opacity:1}}
+@media(prefers-reduced-motion:reduce),(hover:none),(pointer:coarse),(forced-colors:active){.glass-cursor{display:none}}
