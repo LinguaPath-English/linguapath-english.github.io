@@ -1,3 +1,5 @@
+/* The student login scroll lock must not apply to the separate teacher page. */
+body.teacher-page{overflow:auto}
 .teacher-summary{grid-template-columns:repeat(4,1fr)}
 .teacher-tools{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:22px 0 12px}
 .teacher-tools label,.teacher-delete-dialog label{display:block;font-size:13px;font-weight:700}
