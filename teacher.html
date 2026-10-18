@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="teacher.css?v=20261003-1" />
   <link rel="stylesheet" href="teacher-upgrades.css?v=20261017-2" />
   <link rel="stylesheet" href="writing.css?v=20261006-3" />
-  <link rel="stylesheet" href="classroom.css?v=20261018-1" />
+  <link rel="stylesheet" href="classroom.css?v=20261018-2" />
 </head>
 <body class="teacher-page">
   <main class="teacher-shell">
@@ -23,7 +23,8 @@
       <label class="teacher-attention-filter"><input type="checkbox" id="teacher-attention-only" /> Show students needing attention</label>
       <p class="teacher-data-note">Attention flags separate not started, inactive, reviews due, and repeated difficulties. Activity is not a proficiency grade. Last progress received means a cloud save—not whether a student is online.</p>
       <p id="teacher-dashboard-message" class="teacher-error" role="status" aria-live="polite"></p>
-      <div class="teacher-table-wrap" tabindex="0" role="region" aria-label="Student overview; scroll sideways for more columns"><table><thead><tr><th scope="col">Student · open details</th><th scope="col">Status</th><th scope="col">Last 7 days</th><th scope="col">Lifetime exercises</th><th scope="col">Last progress received</th></tr></thead><tbody id="teacher-rows"></tbody></table></div>
+      <p class="teacher-data-note">Full student table. Scroll sideways to see every column. Expand a skill for tier progress, or click a student’s name for their detail view and account settings.</p>
+      <div class="teacher-table-wrap" tabindex="0" role="region" aria-label="Full student table; scroll sideways for more columns"><table><thead><tr><th scope="col">Student</th><th scope="col">Email</th><th scope="col">Exercises</th><th scope="col">Correct</th><th scope="col">Skills &amp; tiers</th><th scope="col">Reviews &amp; support</th><th scope="col">Streak</th><th scope="col">Last exercise activity</th><th scope="col">Last progress received</th><th scope="col">Status</th><th scope="col">Last 7 days</th></tr></thead><tbody id="teacher-rows"></tbody></table></div>
       <p id="teacher-empty" class="muted" hidden>No student accounts found.</p><p id="teacher-filter-empty" class="muted" hidden>No students match that search.</p>
       <section id="teacher-student-detail" class="teacher-detail" hidden aria-labelledby="teacher-detail-title"></section>
       <section class="teacher-assignments" aria-labelledby="teacher-assignments-title"><h2 id="teacher-assignments-title">Class assignments</h2><p class="teacher-data-note">For all enrolled students. Counts new answered exercises, including retries, in the selected skill after creation. Recall practice does not count. Due dates use your device’s time zone.</p><form id="teacher-assignment-form" class="teacher-assignment-form"><label>Title<input id="assignment-title" required maxlength="120" placeholder="Listening practice for Friday" /></label><label>Skill<select id="assignment-skill"><option>Any</option><option>Listening</option><option>Reading</option><option>Writing</option><option>Speaking</option></select></label><label>Exercises<input id="assignment-target" type="number" min="1" max="300" value="10" required /></label><label>Due date<input id="assignment-due" type="date" required /></label><button id="assignment-create" class="primary" type="submit">Create assignment</button></form><p id="assignment-message" role="status" class="teacher-data-note"></p><div id="teacher-assignment-list"></div></section>
@@ -34,6 +35,6 @@
   <dialog id="teacher-delete-dialog" class="teacher-delete-dialog" aria-labelledby="teacher-delete-title"><h2 id="teacher-delete-title">Delete student account?</h2><p id="teacher-delete-description"></p><p>This permanently deletes the login and all saved practice. It cannot be undone.</p><label for="teacher-delete-confirm">Type the student’s email to confirm<input id="teacher-delete-confirm" type="email" autocomplete="off" /></label><p id="teacher-delete-error" class="teacher-error" role="alert"></p><div class="teacher-dialog-actions"><button id="teacher-delete-cancel" class="secondary" type="button">Cancel</button><button id="teacher-delete-submit" class="teacher-danger" type="button" disabled>Delete account</button></div></dialog>
   <script src="learning-tools.js?v=20261013-1"></script>
   <script src="classroom.js?v=20261018-1"></script>
-  <script src="teacher.js?v=20261018-1"></script>
+  <script src="teacher.js?v=20261018-2"></script>
 </body>
 </html>

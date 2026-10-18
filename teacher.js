@@ -77,7 +77,8 @@ function renderStudents() {
   $('#teacher-rows').innerHTML = visible.map(row => {
     const state = row.state || {};
     const week=weeklyPractice(state);
-    return `<tr><td><button class="teacher-student-button" type="button" data-open-student="${escapeHtml(row.user_id)}">${escapeHtml(state.profile?.name || row.email?.split('@')[0] || 'Learner')}</button><small class="teacher-skills">${escapeHtml(row.email || '')}</small></td><td>${studentStatus(row)}</td><td>${state.practiceTrackingSince?`${week.current} recorded exercises · ${week.days} practice days`:'History not yet recorded'}</td><td>${Number(state.exercisesCompleted)||0}</td><td>${row.updated_at?escapeHtml(formatDate(row.updated_at)):'No progress received'}</td></tr>`;
+    const streak=state.lastStreakAt&&Date.now()-state.lastStreakAt>=reviewDay?0:Number(state.streak)||0;
+    return `<tr><td><button class="teacher-student-button" type="button" data-open-student="${escapeHtml(row.user_id)}">${escapeHtml(state.profile?.name || row.email?.split('@')[0] || 'Learner')}</button></td><td>${escapeHtml(row.email||'')}</td><td>${Number(state.exercisesCompleted)||0}</td><td>${Number(state.correct)||0}</td><td>${skillOverview(state)}${writingOverview(state)}</td><td>${reviewOverview(state)}${attentionOverview(state)}</td><td>${streak} days</td><td>${state.lastActivityAt?escapeHtml(formatDate(state.lastActivityAt)):'No exercise activity recorded'}</td><td>${row.updated_at?escapeHtml(formatDate(row.updated_at)):'No progress received'}</td><td>${studentStatus(row)}</td><td>${state.practiceTrackingSince?`${week.current} recorded exercises · ${week.days} practice days`:'History not yet recorded'}</td></tr>`;
   }).join('');
   $('#teacher-empty').hidden = studentRows.length > 0;
   $('#teacher-filter-empty').hidden = !studentRows.length || !!visible.length;
