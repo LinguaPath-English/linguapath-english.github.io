@@ -61,6 +61,9 @@ async function testTeacher() {
   vm.runInContext('teacherSession = {access_token:"token",expires_at:Date.now()/1000+3600,user:{id:"teacher-a"}}', context);
   assert.equal(await vm.runInContext('loadStudents()', context), true);
   assert.match(elements['#teacher-rows'].innerHTML, /data-open-student/);
+  assert.match(elements['#teacher-rows'].innerHTML, /Writing: 4/);
+  assert.match(elements['#teacher-rows'].innerHTML, /student@example.com/);
+  assert.equal((elements['#teacher-rows'].innerHTML.match(/<td>/g)||[]).length,11);
   assert.doesNotMatch(elements['#teacher-rows'].innerHTML, /data-delete-user/);
   vm.runInContext('studentDetailId="student-a";renderStudentDetail()',context);
   assert.match(elements['#teacher-student-detail'].innerHTML,/Writing: 4/);
