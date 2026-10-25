@@ -190,7 +190,14 @@ authForm.addEventListener('submit',async e=>{
   const response=loginMode?await authRequest('token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})}):await authRequest('signup',{method:'POST',body:JSON.stringify({email,password})});
   const result=await response.json();
   if(!response.ok){document.querySelector('#auth-error').textContent=result.error_description||result.msg||result.message||'Unable to access your account.';return}
-  if(result.access_token){cloudSession={...result,expires_at:result.expires_at||Math.floor(Date.now()/1000)+result.expires_in};localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(cloudSession));await loadCloudUser(result.user)}else document.querySelector('#auth-error').textContent='Account created. Check your email to confirm, then log in.';
+  if(result.access_token){cloudSession={...result,expires_at:result.expires_at||Math.floor(Date.now()/1000)+result.expires_in};localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(cloudSession));await loadCloudUser(result.user)}else {
+    setAuthMode(true);
+    document.querySelector('#auth-password').value='';
+    document.querySelector('#auth-confirm-password').value='';
+    document.querySelector('#forgot-password').hidden=false;
+    document.querySelector('#auth-title').textContent='Check your email';
+    document.querySelector('#auth-subtitle').textContent='Open the confirmation email from LinguaPath and click the confirmation link. Then return here and log in. If you do not see it, check your spam or junk folder.';
+  }
 },true);
 authToggle.addEventListener('click',()=>setTimeout(()=>document.querySelector('#forgot-password').hidden=!loginMode,0));
 document.querySelector('#forgot-password').addEventListener('click',async()=>{
